@@ -1,0 +1,138 @@
+# CUARTEL — MCP server registry for Anna's forensic tool fleet.
+#
+# This file is pure metadata. It carries no forensic logic and no decision
+# authority of any kind — it only describes how to launch each project's
+# OWN, independently-owned MCP server, and what capability plane and
+# authority boundary that server operates under.
+#
+# Every entry is a separate MCP capability plane (see zaynor's
+# docs/adr/0001-separate-mcp-capability-planes.md for the precedent this
+# registry generalizes). Entries are never merged into a single combined
+# server. If a target runtime cannot load multiple MCP servers, the
+# documented fallback is a typed multiplexer that preserves these same
+# authority boundaries — not a flat proxy. That multiplexer does not exist
+# yet; this registry does not build one.
+#
+# status values:
+#   ready    - server exists, verified, safe to register with a client now.
+#   blocked  - server exists but has a known open issue; do not register.
+#   planned  - server does not exist yet; tracked here for visibility only.
+
+servers:
+  vigia:
+    display_name: "VIGIA Sift Bridge"
+    repo: /home/labestiadevigia/vigia-repo
+    command: /home/labestiadevigia/vigia-repo/launch_vigia_mcp.sh
+    args: []
+    cwd: /home/labestiadevigia/vigia-repo
+    env: {}
+    # launch_vigia_mcp.sh already exports every env var this server needs
+    # (VIGIA_EVIDENCE_DIR, VIGIA_SYSTEM_PROMPT_PATH, VIGIA_HMAC_KEY_FILE,
+    # VIGIA_LLM_BACKEND, etc.) and sources vigia-repo/.env itself. Cuartel
+    # does not re-declare or override them, to avoid two sources of truth
+    # for the same evidence/work directory confinement.
+    plane: read-only-evidence-and-analysis
+    authority: >-
+      No verdict authority over this bridge's own output beyond what
+      vigia_agent.py's deterministic core already seals. The LLM narration
+      path (reason_with_llm) does not alter sealed values (CLAUDE.md §5.1).
+    status: ready
+    tool_count: 33
+    notes: >-
+      stdio-only by design; vigia_sift_bridge.py's
+      _verify_transport_security() hard-aborts on any other transport.
+
+  zaynor:
+    display_name: "ZAYNOR MCP"
+    repo: /home/labestiadevigia/zaynor
+    command: /home/labestiadevigia/zaynor/.venv/bin/zaynor-mcp
+    args: []
+    cwd: /home/labestiadevigia/zaynor
+    env: {}
+    # ZAYNOR_MCP_STATE_DIR defaults to "state" relative to cwd if unset
+    # (src/zaynor/zaynor_mcp_server.py:41) - fine as a default, override
+    # here only if a dedicated state dir is ever needed.
+    plane: case-memory-and-audit
+    authority: >-
+      No verdict authority. zaynor_info/verify_audit/verify_memory/
+      list_memory/add_hypothesis/note_question never create, modify, or
+      recalculate result.json or result.seal.json (ADR-0001).
+    status: ready
+    tool_count: 6
+    notes: >-
+      ZAYNOR is itself an MCP client of VIGIA/CRONOS/MNEME (see its own
+      docs/mcp-locales.md) — that wiring is internal to zaynor and is not
+      duplicated here. Cuartel only registers zaynor's OWN server.
+
+  velo:
+    display_name: "VELO MCP"
+    repo: /home/labestiadevigia/velo
+    command: null
+    args: []
+    cwd: /home/labestiadevigia/velo
+    env: {}
+    plane: zk-attestation
+    authority: "N/A while blocked."
+    status: blocked
+    tool_count: 13
+    notes: >-
+      BLOCKED: confirmed critical path-traversal (F1) in `caseId` handling,
+      documented in velo/docs/informe-red-team-VELO.md, reachable live
+      through this exact MCP server. Do not register until F1 is fixed and
+      re-verified. Tracked as Level 2 of the orchestrator plan, owned by
+      velo's own repo, not by cuartel.
+
+  annaconda:
+    display_name: "annaconda MCP (not built yet)"
+    repo: /home/labestiadevigia/annaconda
+    command: null
+    args: []
+    cwd: /home/labestiadevigia/annaconda
+    env: {}
+    plane: read-only-verdict-query
+    authority: "N/A — does not exist yet."
+    status: planned
+    tool_count: 0
+    notes: >-
+      No MCP server exists today (verified: zero "mcp" hits in the repo).
+      When built, must expose only a curated read-only subset of core/
+      (sealed-verdict reading) — not the live /investigate or
+      /fleet-investigate routes that trigger a real Velociraptor
+      investigation, by default.
+
+  pancito-red-team:
+    display_name: "pancito-red-team MCP (not built yet)"
+    repo: /home/labestiadevigia/pancito-red-team
+    command: null
+    args: []
+    cwd: /home/labestiadevigia/pancito-red-team
+    env: {}
+    plane: mixed-read-only-and-gated-offensive-action
+    authority: "N/A — does not exist yet."
+    status: planned
+    tool_count: 0
+    notes: >-
+      CAUTION on build: only offensive.openapi_cli and offensive.purple_cli
+      are read-only. Every other offensive.*_cli actively executes network
+      actions (loopback-only, manifest-gated at the CLI layer today). An
+      MCP server for this project must not expose those as freely-callable
+      tools without an equivalent manifest/authorization + loopback
+      enforcement design at the MCP layer. Default surface on first build:
+      openapi_cli + purple_cli only.
+
+  siberian:
+    display_name: "siberian MCP (not built yet)"
+    repo: /home/labestiadevigia/siberian
+    command: null
+    args: []
+    cwd: /home/labestiadevigia/siberian
+    env: {}
+    plane: read-only-artifact-matrix
+    authority: "N/A — does not exist yet."
+    status: planned
+    tool_count: 0
+    notes: >-
+      siberian's own README says "UNDER CONSTRUCTION — NOT READY FOR
+      OPERATIONAL USE." Its CLI (siberian/cli.py) is fully read-only and
+      deterministic, so a server would be safe to build, but register with
+      status: planned (not ready) until siberian's own maturity changes.
