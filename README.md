@@ -46,6 +46,10 @@ visible, never silently.
 |---|---|---|
 | vigia | ready | read-only-evidence-and-analysis |
 | cronos | ready | reasoning-trace-and-audit — fixed a real CONNECTION_CLOSED (missing `trio`, no venv existed) |
+| mneme | ready | read-only, curated to zaynor's own 3-tool allowlist out of 26 |
+| mneme_memory_mcp | planned (superseded) | older/smaller snapshot of the same lineage as mneme — redundant, not registered |
+| raven-memory | ready | read-only, 6 of 12 tools; excludes `raven_recall` (looks read-only, actually writes audit/activation rows) |
+| stigmergy | planned (deep coupling) | CockroachDB is the only coordination channel, not optional; no ORM layer; `recall()` itself writes — not a quick decouple |
 | zaynor | ready | case-memory-and-audit |
 | velo | ready | zk-attestation — F1 path-traversal fixed in `ef0caa4`, re-verified live (`tests/caseid.test.ts`, 4/4 pass) |
 | annaconda | ready | read-only, proxies a GET-only subset of its own HTTP API; requires the service to already be running |

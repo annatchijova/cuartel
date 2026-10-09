@@ -71,6 +71,114 @@ servers:
       matching zaynor's own allowlist for this same server
       (docs/mcp-locales.md).
 
+  mneme:
+    display_name: "MNEME MCP (read-only)"
+    repo: /home/labestiadevigia/mneme
+    command: /usr/bin/python3
+    args: ["mcp_server_readonly.py"]
+    cwd: /home/labestiadevigia/mneme
+    env:
+      MNEME_DB_PATH: "/home/labestiadevigia/mneme/mneme.db"
+    plane: case-memory-and-audit
+    authority: >-
+      No authority; verifies/reads only. Never INSERTs, UPDATEs, grants,
+      or quarantines.
+    status: ready
+    tool_count: 3
+    notes: >-
+      Built 2026-10-09 (mcp_server_readonly.py, commit 124739e). mneme's
+      own mcp_server.py exposes 26 tools, most mutating — NOT registered
+      here. This curated file exposes exactly the 3 tools zaynor already
+      vetted and allowlisted for read-only use
+      (zaynor/docs/adr/0001-separate-mcp-capability-planes.md):
+      mneme_info, mneme_verify_bundle, mneme_custody_chain. Implementations
+      copied verbatim from the main server, not reimplemented. Uses
+      mcp.run() (asyncio default) instead of the main server's forced
+      trio backend, since trio is not installed here and none of these
+      3 tools needs it.
+      Verified with a real stdio handshake (3 tools) and a real call
+      against the live mneme.db.
+
+  mneme_memory_mcp:
+    display_name: "mneme_memory_mcp (superseded — do not register)"
+    repo: /home/labestiadevigia/mneme_memory_mcp
+    command: null
+    args: []
+    cwd: /home/labestiadevigia/mneme_memory_mcp
+    env: {}
+    plane: case-memory-and-audit
+    authority: "N/A — superseded."
+    status: planned
+    tool_count: 0
+    notes: >-
+      Investigated 2026-10-09: an earlier, smaller snapshot of the same
+      lineage as mneme (9 tools vs. mneme's 26; separate GitHub remote,
+      annatchijova/mneme_memory_mcp). mneme is a functional superset.
+      Deliberately not built/registered — would be redundant, not a
+      second source of truth.
+
+  raven-memory:
+    display_name: "raven-memory MCP (read-only)"
+    repo: /home/labestiadevigia/raven-memory
+    command: /usr/bin/python3
+    args: ["mcp_server_readonly.py"]
+    cwd: /home/labestiadevigia/raven-memory
+    env:
+      RAVEN_DB_PATH: "/home/labestiadevigia/raven-memory/raven_memory.db"
+    plane: adaptive-memory-audit
+    authority: >-
+      No authority; reads engine state and the audit chain only.
+    status: ready
+    tool_count: 6
+    notes: >-
+      Built 2026-10-09 (mcp_server_readonly.py, commit 64e5256). mneme's
+      own README documents fusing STIGMERGY + raven-memory's field
+      mechanics, so there is conceptual overlap between this server and
+      mneme — registered anyway per explicit request, as a second,
+      independent memory system with its own engine and audit chain, not
+      a duplicate view of mneme's data.
+      mcp_server.py exposes 12 tools; excludes 5 obvious writes (store,
+      reinforce, forget, create_link, consolidate) AND raven_recall,
+      which looks read-only but calls self._db.store_audit(...) and
+      self._db.update_activations(...) on every call (memory_engine.py).
+      Keeps: raven_stats, raven_get_memory, raven_audit_trail,
+      raven_export_graph, raven_verify_chain, raven_info. Skips
+      constructing the Qwen/sentence-transformers embedding provider
+      entirely, since none of the six kept tools embeds text.
+      Verified with a real stdio handshake (6 tools) and a real call
+      against the live raven_memory.db.
+
+  stigmergy:
+    display_name: "stigmergy MCP (not built — deep CockroachDB coupling)"
+    repo: /home/labestiadevigia/stigmergy
+    command: null
+    args: []
+    cwd: /home/labestiadevigia/stigmergy
+    env: {}
+    plane: multi-agent-coordination
+    authority: "N/A — does not exist."
+    status: planned
+    tool_count: 0
+    notes: >-
+      Investigated 2026-10-09, not built: no MCP server exists. CockroachDB
+      is not an optional/secondary dependency here — it is the only
+      coordination channel between agents AND the primary store: native
+      VECTOR column + VECTOR INDEX for recall() (CockroachDB v25.2+
+      feature, required by the hackathon this was built for), an authority
+      model bound to CockroachDB's own current_user/RBAC
+      (ops/authority.py), changefeeds pushing to Lambda, and retry logic
+      keyed to CockroachDB's own SQLSTATE 40001. No ORM/repository layer
+      exists — raw SQL is spread across 12 files (ops/*.py, audit/*.py,
+      lambdas/*.py). Worse for a read-only bridge: recall() itself writes
+      (updates access metadata, can trigger a REDISCOVERED state
+      transition in the same transaction) — it is not a read despite the
+      name.
+      Decoupling a read-only path with moderate effort is not realistic.
+      If a read-only view is wanted later, the honest path is a periodic
+      exporter/snapshot (ETL to SQLite/JSON) built OUTSIDE stigmergy's own
+      code, with an MCP bridge over that snapshot — not a live bridge
+      against CockroachDB, and not an edit to ops/ or audit/.
+
   zaynor:
     display_name: "ZAYNOR MCP"
     repo: /home/labestiadevigia/zaynor
