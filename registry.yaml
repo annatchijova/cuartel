@@ -91,22 +91,34 @@ servers:
       out of scope for this registration, not re-audited here.
 
   annaconda:
-    display_name: "annaconda MCP (not built yet)"
+    display_name: "annaconda MCP"
     repo: /home/labestiadevigia/annaconda
-    command: null
-    args: []
+    command: /usr/bin/python3
+    args: ["-m", "service.mcp_server"]
     cwd: /home/labestiadevigia/annaconda
-    env: {}
+    env:
+      ANNACONDA_BASE_URL: "http://127.0.0.1:8080"
     plane: read-only-verdict-query
-    authority: "N/A — does not exist yet."
-    status: planned
-    tool_count: 0
+    authority: >-
+      No verdict authority; proxies GET-only routes from the already-running
+      annaconda service. Holds no state, reimplements no logic.
+    status: ready
+    tool_count: 8
     notes: >-
-      No MCP server exists today (verified: zero "mcp" hits in the repo).
-      When built, must expose only a curated read-only subset of core/
-      (sealed-verdict reading) — not the live /investigate or
-      /fleet-investigate routes that trigger a real Velociraptor
-      investigation, by default.
+      Built 2026-10-09 (service/mcp_server.py, commit 6507ebb). Thin stdio
+      wrapper (stdlib urllib only, no new runtime deps besides `mcp`) over
+      a curated GET-only subset of service/app.py: health, registry,
+      catalog, hunts, list_cases, get_case, get_case_stix, get_case_cacao.
+      Excludes by construction every route that creates a case, starts a
+      live investigation, or pushes to an external system (POST /cases,
+      /investigate, /cases/{id}/investigate, /fleet-investigate,
+      /cases/{id}/push-to-secops, /injection-demo, /tasks/sweep).
+      REQUIRES the annaconda service itself to already be running
+      (`uvicorn service.app:app --port 8080`) — this bridge holds no case
+      data of its own. Verified with a real stdio handshake: list_tools
+      returned exactly these 8 tools; a call against a non-annaconda
+      service on the configured port returned a graceful error dict
+      instead of crashing.
 
   pancito-red-team:
     display_name: "pancito-red-team MCP (not built yet)"
