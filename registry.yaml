@@ -42,6 +42,35 @@ servers:
       stdio-only by design; vigia_sift_bridge.py's
       _verify_transport_security() hard-aborts on any other transport.
 
+  cronos:
+    display_name: "CRONOS MCP"
+    repo: /home/labestiadevigia/cronos
+    command: /home/labestiadevigia/cronos/.venv/bin/python3
+    args: ["mcp_server.py"]
+    cwd: /home/labestiadevigia/cronos
+    env:
+      CRONOS_DB_PATH: "/home/labestiadevigia/cronos/cronos.db"
+    plane: reasoning-trace-and-audit
+    authority: >-
+      No authority over any caller's verdict; seals its own trace chain
+      (SHA-256 TraceChain) independently of whatever it is recording about.
+    status: ready
+    tool_count: 10
+    notes: >-
+      FIXED 2026-10-09: this session's own cronos MCP connection failed
+      (CONNECTION_CLOSED) at startup. Root cause verified by reproducing
+      it directly: mcp_server.py hard-requires anyio's trio backend
+      (`anyio.run(mcp.run_stdio_async, backend="trio")`), and `trio` —
+      declared in pyproject.toml — was never installed for the bare
+      `python3` the old config pointed at (no venv existed; `pip install
+      --user` is blocked here by PEP 668). Fix: created
+      cronos/.venv, `pip install -e .` there (pulls mcp + trio), and
+      repointed both ~/.claude.json's own mcpServers.cronos entry and
+      this registry at .venv/bin/python3. Verified with a real stdio
+      handshake after the fix: list_tools returned exactly 10 tools,
+      matching zaynor's own allowlist for this same server
+      (docs/mcp-locales.md).
+
   zaynor:
     display_name: "ZAYNOR MCP"
     repo: /home/labestiadevigia/zaynor
