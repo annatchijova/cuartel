@@ -67,20 +67,28 @@ servers:
   velo:
     display_name: "VELO MCP"
     repo: /home/labestiadevigia/velo
-    command: null
-    args: []
+    command: /usr/bin/node
+    args: ["dist/src/mcp/server.js"]
     cwd: /home/labestiadevigia/velo
     env: {}
     plane: zk-attestation
-    authority: "N/A while blocked."
-    status: blocked
+    authority: >-
+      No verdict authority over this bridge beyond what the sealed bundle
+      already carries; seal_case/verify_case read/write local-cases/ only.
+    status: ready
     tool_count: 13
     notes: >-
-      BLOCKED: confirmed critical path-traversal (F1) in `caseId` handling,
-      documented in velo/docs/informe-red-team-VELO.md, reachable live
-      through this exact MCP server. Do not register until F1 is fixed and
-      re-verified. Tracked as Level 2 of the orchestrator plan, owned by
-      velo's own repo, not by cuartel.
+      UNBLOCKED (2026-10-09): the F1 path-traversal flagged in the original
+      Spanish report (velo/docs/informe-red-team-VELO.md) was fixed in
+      commit ef0caa4 ("Red team round 1: fix 12 of 13 findings, verified
+      against the live code first") — caseId regex at the schema boundary
+      (server.ts) + resolve()/prefix check in the store (store.ts). Verified
+      here, not assumed: ran velo's own tests/caseid.test.ts live, 4/4 pass,
+      including "the store refuses to read or write outside its directory".
+      That Spanish report predates 6 further red-team rounds
+      (docs/RED_TEAM_ROUND_1..6.md); the remaining open items there (F20-F25)
+      are Medium/Low severity and do not touch caseId/MCP path handling —
+      out of scope for this registration, not re-audited here.
 
   annaconda:
     display_name: "annaconda MCP (not built yet)"
