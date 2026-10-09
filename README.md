@@ -8,8 +8,8 @@ Codex CLI, or OpenCode.
 
 This is **not** an MCP server. It does not proxy, aggregate, or flatten any
 project's tools into one combined catalog. Each project in the fleet
-(vigia-repo, zaynor, velo, and eventually annaconda, pancito-red-team,
-siberian) owns and runs its own MCP server, with its own authority boundary.
+(vigia-repo, zaynor, velo, annaconda, pancito-red-team, siberian) owns and
+runs its own MCP server, with its own authority boundary.
 Mixing them into one server would collapse distinct trust levels — read-only
 evidence access is not the same thing as case memory, and neither is the
 same thing as a gated offensive action. zaynor's own
@@ -49,7 +49,7 @@ visible, never silently.
 | velo | ready | zk-attestation — F1 path-traversal fixed in `ef0caa4`, re-verified live (`tests/caseid.test.ts`, 4/4 pass) |
 | annaconda | ready | read-only, proxies a GET-only subset of its own HTTP API; requires the service to already be running |
 | pancito-red-team | ready | exposes only its 2 passive/no-network CLIs (openapi triage, purple evaluate); every offensive network-action CLI stays deliberately unexposed |
-| siberian | planned | project itself is marked not-ready for operational use |
+| siberian | planned | server built and verified (6 tools), but kept unregistered on purpose — siberian's own README still says NOT READY FOR OPERATIONAL USE |
 
 ## Adding a server
 

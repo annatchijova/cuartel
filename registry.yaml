@@ -148,18 +148,28 @@ servers:
       missing-file error path degrades to an error dict, no crash.
 
   siberian:
-    display_name: "siberian MCP (not built yet)"
+    display_name: "siberian MCP (built, not enabled)"
     repo: /home/labestiadevigia/siberian
-    command: null
-    args: []
+    command: /usr/bin/python3
+    args: ["-m", "siberian.mcp_server"]
     cwd: /home/labestiadevigia/siberian
     env: {}
     plane: read-only-artifact-matrix
-    authority: "N/A — does not exist yet."
+    authority: >-
+      No verdict authority; it does not infer deletion or intent — it
+      reports declared evidence gaps only (per siberian's own description).
     status: planned
-    tool_count: 0
+    tool_count: 6
     notes: >-
-      siberian's own README says "UNDER CONSTRUCTION — NOT READY FOR
-      OPERATIONAL USE." Its CLI (siberian/cli.py) is fully read-only and
-      deterministic, so a server would be safe to build, but register with
-      status: planned (not ready) until siberian's own maturity changes.
+      Built 2026-10-09 (siberian/mcp_server.py, commit 1b7a232). Exposes 6
+      read-only subcommands (validate, analyze, explain, seal, verify,
+      rivals) — none writes, mutates, or creates a file. Deliberately
+      excludes import-plaso and the Level 6 adapters (optional extras not
+      installed, "Partial" per siberian's own Build Levels table).
+      Verified with a real stdio handshake (6 tools) and real calls
+      against examples/case-mixed-statuses.json.
+      Still status: planned ON PURPOSE even though the server works and
+      is technically ready: siberian's own README says "UNDER
+      CONSTRUCTION — NOT READY FOR OPERATIONAL USE." The server existing
+      is not the gate here — siberian's own maturity declaration is. Flip
+      to status: ready only when that changes, not when this bridge does.
