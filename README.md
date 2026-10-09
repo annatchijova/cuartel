@@ -48,7 +48,7 @@ visible, never silently.
 | zaynor | ready | case-memory-and-audit |
 | velo | ready | zk-attestation — F1 path-traversal fixed in `ef0caa4`, re-verified live (`tests/caseid.test.ts`, 4/4 pass) |
 | annaconda | ready | read-only, proxies a GET-only subset of its own HTTP API; requires the service to already be running |
-| pancito-red-team | planned | no MCP server exists yet; most of its CLIs execute real offensive network actions and need explicit gating before any MCP exposure |
+| pancito-red-team | ready | exposes only its 2 passive/no-network CLIs (openapi triage, purple evaluate); every offensive network-action CLI stays deliberately unexposed |
 | siberian | planned | project itself is marked not-ready for operational use |
 
 ## Adding a server

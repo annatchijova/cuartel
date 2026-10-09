@@ -121,24 +121,31 @@ servers:
       instead of crashing.
 
   pancito-red-team:
-    display_name: "pancito-red-team MCP (not built yet)"
+    display_name: "pancito-red-team MCP"
     repo: /home/labestiadevigia/pancito-red-team
-    command: null
-    args: []
+    command: /usr/bin/python3
+    args: ["-m", "offensive.mcp_server"]
     cwd: /home/labestiadevigia/pancito-red-team
     env: {}
-    plane: mixed-read-only-and-gated-offensive-action
-    authority: "N/A — does not exist yet."
-    status: planned
-    tool_count: 0
+    plane: passive-local-file-analysis-only
+    authority: >-
+      No verdict/finding authority on its own; triages/scores receipts the
+      caller already produced. Does not execute any network action.
+    status: ready
+    tool_count: 2
     notes: >-
-      CAUTION on build: only offensive.openapi_cli and offensive.purple_cli
-      are read-only. Every other offensive.*_cli actively executes network
-      actions (loopback-only, manifest-gated at the CLI layer today). An
-      MCP server for this project must not expose those as freely-callable
-      tools without an equivalent manifest/authorization + loopback
-      enforcement design at the MCP layer. Default surface on first build:
-      openapi_cli + purple_cli only.
+      Built 2026-10-09 (offensive/mcp_server.py, commit c5a56cc). Exposes
+      ONLY pancito_openapi_triage and pancito_purple_evaluate — the two
+      passive, no-network CLIs. Every other offensive.*_cli (bola_cli,
+      cors_misconfiguration_cli, ssrf_outbound_fetch_cli, etc.) actively
+      executes real network actions against a manifest-declared loopback
+      target and is deliberately NOT exposed here. Growing this tool list
+      requires a separately reviewed authorization/loopback-enforcement
+      design at the MCP layer, not an edit to this file.
+      Verified with a real stdio handshake (2 tools) and a real end-to-end
+      call against hand-built fixtures matching
+      tests/test_openapi_cli.py's own expected values byte-for-byte; the
+      missing-file error path degrades to an error dict, no crash.
 
   siberian:
     display_name: "siberian MCP (not built yet)"
