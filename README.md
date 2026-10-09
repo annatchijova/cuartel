@@ -1,70 +1,55 @@
+[English](README.md) · [Español](README_ES.md) · [Technical README](TECHNICAL_README.md) · [Referencia técnica en español](TECHNICAL_README_ES.md)
+
 # CUARTEL
 
-A single source of truth for Anna's forensic tool fleet's MCP servers,
-rendered into whichever agent runtime she's using that day — Claude Code,
-Codex CLI, or OpenCode.
+Anna runs a fleet of independent forensic and security tools — VIGÍA, CRONOS,
+MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, SIBERIAN,
+STIGMERGY — each its own repository, its own tests, its own release cadence.
+Several already speak MCP. Connecting all of them to an agent runtime (Claude
+Code today; Codex CLI or OpenCode if she ever needs a fallback) meant hand
+editing a different config file format for each client, every time a server
+was added, moved, or fixed.
 
-## What this is not
+CUARTEL is the single place that knows how to launch each one and in what
+format each runtime expects to hear about it.
 
-This is **not** an MCP server. It does not proxy, aggregate, or flatten any
-project's tools into one combined catalog. Each project in the fleet
-(vigia-repo, zaynor, velo, annaconda, pancito-red-team, siberian) owns and
-runs its own MCP server, with its own authority boundary.
-Mixing them into one server would collapse distinct trust levels — read-only
-evidence access is not the same thing as case memory, and neither is the
-same thing as a gated offensive action. zaynor's own
-[`docs/adr/0001-separate-mcp-capability-planes.md`](https://github.com/annatchijova/zaynor/blob/main/docs/adr/0001-separate-mcp-capability-planes.md)
-made this same call at a smaller scale; this repo generalizes it across the
-whole fleet instead of re-deciding it per project.
+## What it is not
 
-If a target runtime someday cannot load more than one MCP server, the
-documented fallback is a typed multiplexer that preserves these same
-capability-plane boundaries — not a flat proxy. That multiplexer does not
-exist yet.
+CUARTEL is **not** an MCP server, and it does not aggregate anyone's tools
+into one combined catalog. Each project in the fleet keeps running its own
+MCP server, under its own authority boundary. Mixing a read-only evidence
+bridge, a memory-mutation bridge, and a gated offensive-action bridge into
+one process would collapse exactly the distinctions that make each of them
+safe to expose at all — the same call ZAYNOR's own
+[ADR-0001](https://github.com/annatchijova/zaynor/blob/main/docs/adr/0001-separate-mcp-capability-planes.md)
+already made at a smaller scale.
 
-## What this is
+## What it is
 
-`registry.yaml` — one entry per project's MCP server: how to launch it,
-what capability plane it operates in, its authority note, and its status
-(`ready` / `blocked` / `planned`). `render.py` reads that registry and emits:
+A metadata registry (`registry.yaml`) plus a renderer (`render.py`) that
+translates it into Claude Code's `.mcp.json`, Codex CLI's `config.toml`, and
+OpenCode's `opencode.json` — so changing where a server lives, or adding a
+new one, is a one-line edit followed by one command, not three.
 
+```bash
+python3 render.py claude --out ~/.claude.json-mcp-snippet
+python3 render.py codex
+python3 render.py opencode
+python3 render.py doctor      # sanity-checks every registered command
 ```
-python3 render.py claude              # .mcp.json format, to stdout
-python3 render.py codex                # config.toml [mcp_servers.*] snippet
-python3 render.py opencode             # opencode.json mcp block
-python3 render.py doctor               # sanity-check every entry's command exists
-python3 render.py claude --out ~/some/path/.mcp.json
-```
 
-Only `status: ready` entries are ever rendered into a runtime config.
-`blocked` and `planned` entries show up in `doctor` output so the gap stays
-visible, never silently.
+## Current fleet
 
-## Current fleet status
+| Server | Status |
+|---|---|
+| VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM | ready |
+| SIBERIAN | built, kept disabled — its own README says not ready for operational use |
+| mneme_memory_mcp | superseded by MNEME, not registered |
+| STIGMERGY | not built — see [Technical README](TECHNICAL_README.md) for why |
 
-| Server | Status | Plane |
-|---|---|---|
-| vigia | ready | read-only-evidence-and-analysis |
-| cronos | ready | reasoning-trace-and-audit — fixed a real CONNECTION_CLOSED (missing `trio`, no venv existed) |
-| mneme | ready | read-only, curated to zaynor's own 3-tool allowlist out of 26 |
-| mneme_memory_mcp | planned (superseded) | older/smaller snapshot of the same lineage as mneme — redundant, not registered |
-| raven-memory | ready | read-only, 6 of 12 tools; excludes `raven_recall` (looks read-only, actually writes audit/activation rows) |
-| stigmergy | planned (deep coupling) | CockroachDB is the only coordination channel, not optional; no ORM layer; `recall()` itself writes — not a quick decouple |
-| zaynor | ready | case-memory-and-audit |
-| velo | ready | zk-attestation — F1 path-traversal fixed in `ef0caa4`, re-verified live (`tests/caseid.test.ts`, 4/4 pass) |
-| annaconda | ready | read-only, proxies a GET-only subset of its own HTTP API; requires the service to already be running |
-| pancito-red-team | ready | exposes only its 2 passive/no-network CLIs (openapi triage, purple evaluate); every offensive network-action CLI stays deliberately unexposed |
-| siberian | planned | server built and verified (6 tools), but kept unregistered on purpose — siberian's own README still says NOT READY FOR OPERATIONAL USE |
-
-## Adding a server
-
-1. The project builds and verifies its **own** MCP server first (handshake
-   confirmed, tool count known) — this repo never contains forensic or
-   security logic of its own.
-2. Add an entry to `registry.yaml` with `status: ready` once that's done.
-3. Re-run `render.py <target>` and point the runtime's config at the output
-   (or `--out` directly to the runtime's config path).
+Full detail, the architecture decision behind it, and the registry schema are
+in the [Technical README](TECHNICAL_README.md).
 
 ## Requirements
 
-`pip install pyyaml` (or system package) — stdlib otherwise.
+`pip install pyyaml` (or your system package) — stdlib otherwise.
