@@ -76,6 +76,7 @@ visible en vez de silencioso.
 | `codex` | `config.toml` de Codex CLI | bloques `[mcp_servers.<nombre>]` con `command`, `args`, `cwd`, `env.*`, `enabled` |
 | `opencode` | `opencode.json` de OpenCode | `{"mcp": {nombre: {type: "local", command: [...], environment?, enabled}}}` |
 | `doctor` | — | una línea por entrada: `OK`/`MISSING` para `ready`, o el estado + los primeros 100 caracteres de `notes` para el resto |
+| `doctor --deep` | — | un handshake stdio real por entrada `ready` (deliberadamente sin `cwd`, igual que el comportamiento real del scope global): `OK` (el conteo coincide), `DRIFT` (el handshake funcionó, pero el conteo de tools cambió respecto al registro), o `FAIL` con un diagnóstico de una pequeña biblioteca de firmas de falla ya vividas por este proyecto, cuando alguna coincide (ROADMAP_ES.md Nivel 1) |
 
 Los tres formatos se confirmaron contra la documentación propia y actual de
 cada herramienta al momento de construir esto (octubre 2026), no se

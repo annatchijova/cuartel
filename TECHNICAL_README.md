@@ -75,6 +75,7 @@ exist yet, or exists but is deliberately not enabled) both show up in
 | `codex` | Codex CLI's `config.toml` | `[mcp_servers.<name>]` blocks with `command`, `args`, `cwd`, `env.*`, `enabled` |
 | `opencode` | OpenCode's `opencode.json` | `{"mcp": {name: {type: "local", command: [...], environment?, enabled}}}` |
 | `doctor` | — | one line per entry: `OK`/`MISSING` for `ready`, or the status + first 100 chars of `notes` for anything else |
+| `doctor --deep` | — | a real stdio handshake per `ready` entry (deliberately without `cwd`, matching the global scope's actual behavior): `OK` (count matches), `DRIFT` (handshake succeeded, tool count changed from the registry), or `FAIL` with a diagnosis from a small library of this project's own past failure signatures when one matches (ROADMAP.md Level 1) |
 
 All three formats were confirmed against each tool's own current
 documentation at the time this was built (October 2026), not assumed from

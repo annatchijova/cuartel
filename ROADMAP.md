@@ -35,7 +35,7 @@ very first version of `registry.yaml`:
    tool is safe to expose. That decision is always surfaced for a human (or
    an agent acting explicitly on her behalf) to make.
 
-## Level 1 — The doctor actually diagnoses, not just pings
+## Level 1 — The doctor actually diagnoses, not just pings — BUILT 2026-10-09
 
 Today, `render.py doctor` only checks that a command's file exists. It
 missed the real failure mode entirely: 5 of 6 new entries failed with
@@ -57,6 +57,17 @@ the fix that worked last time, not just the raw error).
 
 Useful standalone: this alone would have caught today's incident before
 Anna did, with the actual root cause already named, the day it happened.
+
+**Built as `render.py doctor --deep`.** First real run against the whole
+fleet caught a genuine drift immediately: VIGÍA's registry said 33 tools,
+the live handshake said 32 — fixed on the spot, which is exactly the
+loop this level exists to close. The diagnosis library itself needed one
+real fix before it worked: the first regex for the cwd-not-honored
+signature didn't match Python's actual error wording
+(`can't open file '...'` comes before "No such file or directory", not
+after it) — found by deliberately triggering the failure path with a
+broken fake entry and reading the real output, not assumed from writing
+the regex.
 
 ## Level 2 — CUARTEL can explain itself to whoever asks
 

@@ -40,6 +40,7 @@ python3 render.py claude --out ~/.claude.json-mcp-snippet
 python3 render.py codex
 python3 render.py opencode
 python3 render.py doctor      # sanity-checks every registered command
+python3 render.py doctor --deep   # real handshake + tool-count drift + diagnosis (ROADMAP.md L1)
 ```
 
 ## Current fleet

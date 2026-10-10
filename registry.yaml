@@ -52,10 +52,13 @@ servers:
       vigia_agent.py's deterministic core already seals. The LLM narration
       path (reason_with_llm) does not alter sealed values (CLAUDE.md §5.1).
     status: ready
-    tool_count: 33
+    tool_count: 32
     notes: >-
       stdio-only by design; vigia_sift_bridge.py's
       _verify_transport_security() hard-aborts on any other transport.
+      tool_count corrected 33 → 32 by `doctor --deep` (2026-10-09): the
+      original count came from an explorer's static read of the source,
+      the live handshake is the ground truth.
 
   cronos:
     display_name: "CRONOS MCP"

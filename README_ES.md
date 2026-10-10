@@ -41,6 +41,7 @@ python3 render.py claude --out ~/.claude.json-mcp-snippet
 python3 render.py codex
 python3 render.py opencode
 python3 render.py doctor      # valida que cada comando registrado exista
+python3 render.py doctor --deep   # handshake real + drift de tool_count + diagnóstico (ROADMAP_ES.md N1)
 ```
 
 ## Flota actual

@@ -39,7 +39,7 @@ versión de `registry.yaml`:
    siempre se muestra para que un humano (o un agente actuando
    explícitamente en su nombre) la tome.
 
-## Nivel 1 — El doctor diagnostica de verdad, no solo pinguea
+## Nivel 1 — El doctor diagnostica de verdad, no solo pinguea — CONSTRUIDO 2026-10-09
 
 Hoy, `render.py doctor` solo chequea que el archivo de un comando exista.
 Se perdió por completo el modo de falla real: 5 de 6 entradas nuevas
@@ -63,6 +63,17 @@ fix que funcionó la última vez, no solo el error crudo).
 Útil por sí solo: esto solo ya habría agarrado el incidente de hoy antes
 de que Anna lo notara, con la causa raíz real ya puesta en nombre, el
 mismo día que pasó.
+
+**Construido como `render.py doctor --deep`.** La primera corrida real
+contra toda la flota encontró una desviación genuina de inmediato: el
+registro decía que VIGÍA tenía 33 tools, el handshake en vivo dijo 32 —
+corregido en el momento, que es exactamente el loop que este nivel existe
+para cerrar. La propia biblioteca de diagnóstico necesitó un fix real
+antes de funcionar: la primera regex para la firma de cwd-no-respetado no
+coincidía con la redacción real del error de Python (`can't open file
+'...'` viene antes de "No such file or directory", no después) —
+encontrado disparando deliberadamente el camino de falla con una entrada
+falsa rota y leyendo la salida real, no asumido al escribir la regex.
 
 ## Nivel 2 — CUARTEL puede explicarse a quien le pregunte
 
