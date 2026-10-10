@@ -197,7 +197,7 @@ ella quiera tomarla, no un default que elige alguien más por ella.
 Útil por sí solo: esta es la diferencia entre enterarse de la desviación
 cuando muerde, versus enterarse en un ritmo que Anna controla.
 
-## Nivel 5 — La desviación se vuelve un borrador, no una sorpresa
+## Nivel 5 — La desviación se vuelve un borrador, no una sorpresa — CONSTRUIDO 2026-10-10
 
 Hoy, cuando algo en la flota cambia — aparece un servidor MCP nuevo en un
 proyecto, el conteo de tools se mueve, el estado de madurez de un
@@ -217,6 +217,45 @@ borrador a `ready` con su propia autoridad.
 Útil por sí solo: la brecha entre "esta flota creció" y "el registro sabe
 que creció" se achica de lo que tarde alguien en notarlo, a lo que tarde
 revisar un borrador.
+
+**Construido como `render.py scan`.** Dos chequeos, ninguno de los cuales
+escribe `registry.yaml` jamás: (1) una búsqueda por patrón de nombre
+(`*mcp_server*.py`, `mcp/server.js` compilado) en cada repo
+`ready`/`blocked`, por un archivo al que ninguna entrada resuelve en
+`args` — cubriendo paths literales, invocaciones `-m paquete.modulo`, y
+console-scripts instalados (resueltos vía el propio `pyproject.toml`
+`[project.scripts]` del proyecto, para que el patrón de instalación de
+ZAYNOR no parezca desconocido en cada corrida); (2) si el propio README
+de SIBERIAN todavía tiene el banner "NOT READY FOR OPERATIONAL USE" al
+que está atado `status: planned`.
+
+La primera versión del chequeo (1), corrida de verdad contra toda la
+flota, devolvió 22 "archivos nuevos" — casi todo ruido: internos de SDKs
+vendorizados dentro de `vigia-repo/.venv` cuyos nombres de archivo
+coinciden con el patrón, archivos de test, y cada entrada que usa `-m` o
+un console-script (que no tienen ningún path literal contra el cual el
+chequeo naïve pudiera comparar). Arreglado excluyendo directorios
+`.venv`/`site-packages`/`node_modules`/`tests`, resolviendo los args `-m
+modulo` y las entradas de console-script de vuelta a un path real, y
+restringiendo el escaneo a repos `ready`/`blocked` solamente (los repos
+`planned` o no están construidos, o son una decisión ya tomada y
+documentada — reescanearlos es ruido, no desviación nueva). Eso lo bajó
+de 22 a 3 falsos positivos reales que siguen en pie, documentados en vez
+de seguir perseguidos: el propio `mcp_server.py` completo (sin curar) de
+MNEME y de raven-memory genuinamente existe y genuinamente no está
+registrado — a propósito, porque solo sus hermanos curados de solo
+lectura lo están — y el `cronos_mcp_server.py` de FORGE coincide con el
+patrón de nombre sin ser realmente un servidor MCP. Un chequeo de
+contenido (¿el archivo instancia `FastMCP(...)` de verdad?) resolvería
+el tercero; queda como limitación conocida por ahora en vez de
+construida, en el espíritu de un punto de partida que no tiene que ser
+perfecto.
+
+También se verificó el chequeo de madurez de SIBERIAN directamente, sin
+tocar el archivo real: se parchó `Path.read_text` para devolver el
+contenido del README sin el banner, se confirmó que `scan` redactó la
+sugerencia de cambio de estado; restaurado, se confirmó que vuelve a
+quedar en silencio.
 
 ## Cómo se ve "terminado" si el tiempo se acaba en cualquier nivel
 

@@ -77,6 +77,8 @@ visible en vez de silencioso.
 | `opencode` | `opencode.json` de OpenCode | `{"mcp": {nombre: {type: "local", command: [...], environment?, enabled}}}` |
 | `doctor` | — | una línea por entrada: `OK`/`MISSING` para `ready`, o el estado + los primeros 100 caracteres de `notes` para el resto |
 | `doctor --deep` | — | un handshake stdio real por entrada `ready` (deliberadamente sin `cwd`, igual que el comportamiento real del scope global): `OK` (el conteo coincide), `DRIFT` (el handshake funcionó, pero el conteo de tools cambió respecto al registro), o `FAIL` con un diagnóstico de una pequeña biblioteca de firmas de falla ya vividas por este proyecto, cuando alguna coincide (ROADMAP_ES.md Nivel 1) |
+| `digest` | — | el mismo chequeo profundo, comparado contra `.doctor_state.json` (en `.gitignore`) de la última corrida — imprime solo las transiciones (fallo nuevo, fallo resuelto, cambio de tool_count) o "sin cambios", la forma que debería tener una corrida programada (ROADMAP_ES.md Nivel 4; el ritmo en sí no lo decide este repo) |
+| `scan` | — | redacta cambios de `registry.yaml` para la desviación que encuentra — un archivo de servidor MCP nuevo en un repo conocido al que ninguna entrada apunta, o el README de SIBERIAN perdiendo su banner "NOT READY" — y los imprime para revisión. Nunca escribe `registry.yaml` (ROADMAP_ES.md Nivel 5) |
 
 Los tres formatos se confirmaron contra la documentación propia y actual de
 cada herramienta al momento de construir esto (octubre 2026), no se

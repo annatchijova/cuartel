@@ -76,6 +76,8 @@ exist yet, or exists but is deliberately not enabled) both show up in
 | `opencode` | OpenCode's `opencode.json` | `{"mcp": {name: {type: "local", command: [...], environment?, enabled}}}` |
 | `doctor` | — | one line per entry: `OK`/`MISSING` for `ready`, or the status + first 100 chars of `notes` for anything else |
 | `doctor --deep` | — | a real stdio handshake per `ready` entry (deliberately without `cwd`, matching the global scope's actual behavior): `OK` (count matches), `DRIFT` (handshake succeeded, tool count changed from the registry), or `FAIL` with a diagnosis from a small library of this project's own past failure signatures when one matches (ROADMAP.md Level 1) |
+| `digest` | — | the same deep check, compared against `.doctor_state.json` (gitignored) from the last run — prints only transitions (new fail, resolved fail, tool-count change) or "no changes," the shape a scheduled run should actually print (ROADMAP.md Level 4; the schedule itself is not decided by this repo) |
+| `scan` | — | drafts `registry.yaml` changes for drift it finds — a new MCP server file in a known repo not referenced by any entry, or SIBERIAN's own README losing its "NOT READY" banner — and prints them for review. Never writes `registry.yaml` (ROADMAP.md Level 5) |
 
 All three formats were confirmed against each tool's own current
 documentation at the time this was built (October 2026), not assumed from

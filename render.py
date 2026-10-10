@@ -222,6 +222,156 @@ def cmd_doctor_deep(servers: dict, timeout: float = 10.0) -> int:
     return 0 if ok else 1
 
 
+_MCP_SERVER_GLOBS = ["*mcp_server*.py", "**/mcp/server.js", "**/mcp/server.ts"]
+
+
+_SCAN_EXCLUDE_DIR_NAMES = {"node_modules", ".venv", "venv", "site-packages", "tests", "test"}
+
+
+def _find_mcp_server_files(repo: str) -> list[Path]:
+    root = Path(repo)
+    if not root.is_dir():
+        return []
+    found = set()
+    for pattern in _MCP_SERVER_GLOBS:
+        for f in root.rglob(pattern):
+            if _SCAN_EXCLUDE_DIR_NAMES & set(f.parts):
+                # Dependency internals (a vendored anthropic/fastmcp/litellm
+                # SDK matching "mcp_server" in its own filenames) and test
+                # files are not a fleet project's own server -- scanning
+                # them produced exactly this kind of noise the first time
+                # this ran for real against vigia-repo's own .venv.
+                continue
+            if f.suffix in (".js", ".ts") and "dist" not in f.parts:
+                # Source (src/mcp/server.ts) is not what a client launches --
+                # only the built dist/.../server.js is, avoiding a false
+                # positive on velo's own source-vs-build pair.
+                continue
+            found.add(f.resolve())
+    return sorted(found)
+
+
+def _module_arg_to_path(repo: str, args: list) -> Path | None:
+    """`-m package.module` resolves to a real file on disk relative to the
+    project root (or its `src/` layout) even though no literal path
+    appears in args -- without this, every entry using `-m` (annaconda,
+    forge, pancito-red-team, siberian) looks like its server file is
+    unknown to the registry, which is a false positive, not real drift."""
+    if "-m" not in args:
+        return None
+    idx = args.index("-m")
+    if idx + 1 >= len(args):
+        return None
+    rel = Path(*args[idx + 1].split(".")).with_suffix(".py")
+    for base in (Path(repo), Path(repo) / "src"):
+        candidate = base / rel
+        if candidate.is_file():
+            return candidate.resolve()
+    return None
+
+
+def _console_script_to_path(repo: str, command: str) -> Path | None:
+    """Resolve an installed console-script command (e.g.
+    `.venv/bin/zaynor-mcp`) back to its source file via the project's own
+    `pyproject.toml` [project.scripts] entry -- without this, any project
+    using this install pattern (zaynor) looks like its server file is
+    unknown to the registry every single scan, which is a false
+    positive, not real drift."""
+    pyproject = Path(repo) / "pyproject.toml"
+    if not pyproject.is_file():
+        return None
+    name = Path(command).name
+    text = pyproject.read_text(encoding="utf-8", errors="replace")
+    m = re.search(rf'^{re.escape(name)}\s*=\s*"([\w.]+):', text, re.MULTILINE)
+    if not m:
+        return None
+    rel = Path(*m.group(1).split(".")).with_suffix(".py")
+    for base in (Path(repo), Path(repo) / "src"):
+        candidate = base / rel
+        if candidate.is_file():
+            return candidate.resolve()
+    return None
+
+
+def _known_script_paths(servers: dict) -> set[Path]:
+    paths = set()
+    for cfg in servers.values():
+        args = cfg.get("args") or []
+        for a in args:
+            if isinstance(a, str) and a.endswith((".py", ".js", ".ts")):
+                paths.add(Path(a).resolve())
+        if cfg.get("repo"):
+            resolved = _module_arg_to_path(cfg["repo"], args)
+            if resolved:
+                paths.add(resolved)
+            if not args and cfg.get("command"):
+                resolved = _console_script_to_path(cfg["repo"], cfg["command"])
+                if resolved:
+                    paths.add(resolved)
+    return paths
+
+
+def cmd_scan(servers: dict) -> int:
+    """ROADMAP.md Level 5: looks for drift this registry doesn't know
+    about yet and drafts what it would change -- NEVER writes
+    registry.yaml itself. Two checks:
+
+    1. A new mcp_server*.py (or built mcp/server.js) file inside a repo
+       this registry already tracks, that no entry's `args` points at --
+       a second server appearing, or the known one being renamed/moved.
+    2. For SIBERIAN specifically: whether its own README still carries
+       the "NOT READY FOR OPERATIONAL USE" banner that this registry's
+       `status: planned` decision is keyed to.
+
+    Every finding is printed as a draft for a human (or an agent acting
+    on her explicit instruction) to review -- promoting a draft to an
+    actual registry.yaml change is never this function's decision."""
+    known_paths = _known_script_paths(servers)
+    # Only scan repos of ready/blocked entries: a "planned" entry is either
+    # not built at all (nothing to find) or built but deliberately held
+    # back with the reason already in `notes` (siberian) or already
+    # superseded (mneme_memory_mcp) -- re-surfacing that every scan is
+    # noise, not new drift.
+    seen_repos = sorted({
+        cfg["repo"] for cfg in servers.values()
+        if cfg.get("repo") and cfg.get("status") in ("ready", "blocked")
+    })
+    drafts = []
+
+    for repo in seen_repos:
+        for f in _find_mcp_server_files(repo):
+            if f not in known_paths:
+                drafts.append(
+                    f"NEW FILE not referenced by any entry's args: {f}\n"
+                    f"  (repo already tracked in registry.yaml: {repo})\n"
+                    f"  draft: this may be a new server, or the existing one "
+                    f"renamed/moved -- verify with a real handshake before "
+                    f"adding or editing a registry.yaml entry, same as every "
+                    f"other entry here."
+                )
+
+    siberian_readme = Path("/home/labestiadevigia/siberian/README.md")
+    if siberian_readme.is_file():
+        text = siberian_readme.read_text(encoding="utf-8", errors="replace")
+        if "NOT READY FOR OPERATIONAL USE" not in text:
+            drafts.append(
+                "siberian/README.md no longer contains \"NOT READY FOR "
+                "OPERATIONAL USE\" -- registry.yaml's status: planned for "
+                "siberian is keyed to that exact banner.\n"
+                "  draft: re-read siberian's own current maturity claim, then "
+                "consider flipping siberian's status: planned -> ready in "
+                "registry.yaml if its own project now says it's ready."
+            )
+
+    if not drafts:
+        print(f"No drift detected across {len(seen_repos)} tracked repos -- nothing to draft.")
+        return 0
+    print(f"{len(drafts)} draft(s) found -- review before touching registry.yaml:\n")
+    for d in drafts:
+        print(f"- {d}\n")
+    return 0
+
+
 STATE_PATH = Path(__file__).parent / ".doctor_state.json"
 
 
@@ -306,6 +456,8 @@ def main() -> int:
     )
     digest_parser.add_argument("--timeout", type=float, default=10.0)
 
+    sub.add_parser("scan", help="draft registry.yaml changes for undetected drift; never applies them (ROADMAP.md Level 5)")
+
     args = parser.parse_args()
     servers = load_registry()
 
@@ -322,6 +474,9 @@ def main() -> int:
 
     if args.target == "digest":
         return cmd_digest(servers, args.timeout)
+
+    if args.target == "scan":
+        return cmd_scan(servers)
 
     output = renderers[args.target](servers)
     if getattr(args, "out", None):

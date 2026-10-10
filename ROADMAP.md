@@ -182,7 +182,7 @@ where the output goes, who sees it), and ROADMAP.md's own invariants say
 this should be Anna's call to make when she wants it, not a default
 anyone else picks for her.
 
-## Level 5 — Drift becomes a draft, not a surprise
+## Level 5 — Drift becomes a draft, not a surprise — BUILT 2026-10-10
 
 Today, when something in the fleet changes — a new MCP server appears in
 a project, a tool count shifts, a project's own maturity status flips
@@ -201,6 +201,41 @@ own draft to `ready` on its own authority.
 Useful standalone: the gap between "this fleet grew" and "the registry
 knows it grew" shrinks from however long it takes someone to notice, to
 however long it takes to review one draft.
+
+**Built as `render.py scan`.** Two checks, neither of which ever writes
+`registry.yaml`: (1) a filename-pattern search (`*mcp_server*.py`, built
+`mcp/server.js`) across every `ready`/`blocked` repo for a file no
+entry's `args` resolves to — covering literal paths, `-m package.module`
+invocations, and installed console scripts (resolved via the project's
+own `pyproject.toml` `[project.scripts]`, so ZAYNOR's install pattern
+doesn't look unknown every run); (2) whether SIBERIAN's own README still
+carries the "NOT READY FOR OPERATIONAL USE" banner `status: planned` is
+keyed to.
+
+The first version of check (1), run for real against the whole fleet,
+returned 22 "new files" — almost all noise: vendored SDK internals inside
+`vigia-repo/.venv` whose filenames happen to match the pattern, test
+files, and every entry that uses `-m` or a console script (which have no
+literal path for the naive check to match against at all). Fixed by
+excluding `.venv`/`site-packages`/`node_modules`/`tests` directories,
+resolving `-m module` args and console-script entries back to a real
+file path, and restricting the scan to `ready`/`blocked` repos only
+(`planned` repos are either unbuilt or a decision already made and
+documented — rescanning them is noise, not new drift). That took it from
+22 down to 3 real, still-standing false positives, documented rather than
+chased further: MNEME's and raven-memory's own full (uncurated)
+`mcp_server.py` genuinely exist and genuinely aren't registered — by
+design, since only their curated read-only siblings are — and FORGE's
+`cronos_mcp_server.py` matches the filename pattern without actually
+being an MCP server. A content check (does the file actually instantiate
+`FastMCP(...)`) would resolve the third one; left as a known limitation
+for now rather than built, in the spirit of a kickoff that doesn't have
+to be perfect.
+
+Also verified the SIBERIAN maturity check directly, without touching the
+real file: monkeypatched `Path.read_text` to return README content
+without the banner, confirmed `scan` drafted the status-flip suggestion;
+restored, confirmed it goes quiet again.
 
 ## What "done" looks like if time runs out at any level
 

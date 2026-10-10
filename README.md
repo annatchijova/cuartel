@@ -48,6 +48,7 @@ python3 render.py opencode
 python3 render.py doctor      # sanity-checks every registered command
 python3 render.py doctor --deep   # real handshake + tool-count drift + diagnosis (ROADMAP.md L1)
 python3 render.py digest          # deep check, but only reports what changed since last run (ROADMAP.md L4)
+python3 render.py scan            # drafts registry.yaml changes for undetected drift; never applies them (ROADMAP.md L5)
 ```
 
 CUARTEL also exposes itself as an MCP server (`mcp_server.py`) so any agent
