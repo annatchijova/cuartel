@@ -2,6 +2,9 @@
 
 # CUARTEL
 
+> Registro MCP para la flota de herramientas forenses de Anna — un solo
+> registro, renderizado para Claude Code, Codex CLI, y OpenCode.
+
 Anna mantiene una flota de herramientas forenses y de seguridad independientes
 — VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda,
 PANCITO-RED-TEAM, SIBERIAN, STIGMERGY, FORGE, CORVUS — cada una en su propio

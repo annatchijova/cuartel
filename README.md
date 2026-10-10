@@ -2,6 +2,9 @@
 
 # CUARTEL
 
+> MCP registry for Anna's forensic tool fleet — one registry, rendered to
+> Claude Code, Codex CLI, and OpenCode.
+
 Anna runs a fleet of independent forensic and security tools — VIGÍA, CRONOS,
 MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, SIBERIAN,
 STIGMERGY, FORGE, CORVUS — each its own repository, its own tests, its own
