@@ -288,6 +288,36 @@ exporter/snapshot (ETL to SQLite or JSON) built **outside** STIGMERGY's own
 code, with an MCP bridge over that snapshot — not a live bridge against
 CockroachDB, and not an edit to `ops/` or `audit/`.
 
+## A real gotcha: Claude Code's global scope ignores `cwd`
+
+Found 2026-10-09 the hard way: after merging a render into the live
+`~/.claude.json`, 5 of 6 new entries failed with `CONNECTION_CLOSED` on
+reconnect. Reproduced directly: Claude Code's global **"User MCPs"**
+scope (the top-level `mcpServers` in `~/.claude.json`, as opposed to a
+project-local `.mcp.json`) does not apply the `cwd` field. Any entry whose
+`args` contains a relative path, or whose command needs the working
+directory on `sys.path` for a `-m module` invocation, fails immediately
+in that scope — even though the identical entry works in a project-scoped
+config.
+
+`cwd` is still declared in `registry.yaml` (harmless if another client
+honors it, e.g. a project-local Claude config, Codex, or OpenCode), but
+every entry's `command`/`args`/`env` must also be fully self-sufficient
+without it:
+
+- Any script path in `args` must be absolute, not relative.
+- Any `-m <package>` invocation needs `PYTHONPATH` set in `env` to that
+  package's root (the same pattern FORGE's entry already used, which is
+  why it was never affected).
+
+Before trusting a new entry, reproduce both directions yourself, the same
+way this was found: run the exact configured command from an unrelated
+directory with `cwd` NOT set, confirm it fails the same way
+`CONNECTION_CLOSED` would, then confirm the absolute-path/`PYTHONPATH`
+fix succeeds with a real stdio handshake. Don't infer this from reading
+the entry — the failure mode is silent until something actually tries to
+connect.
+
 ## Adding a server
 
 1. The project builds and verifies its **own** MCP server first — a real

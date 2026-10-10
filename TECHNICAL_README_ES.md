@@ -306,6 +306,36 @@ es un exportador/snapshot periódico (ETL a SQLite o JSON) construido
 snapshot — no un bridge en vivo contra CockroachDB, y no una edición de
 `ops/` o `audit/`.
 
+## Una trampa real: el scope global de Claude Code ignora `cwd`
+
+Encontrado el 2026-10-09 de la peor manera: después de fusionar un render
+en el `~/.claude.json` real, 5 de 6 entradas nuevas fallaron con
+`CONNECTION_CLOSED` al reconectar. Se reprodujo directamente: el scope
+global **"User MCPs"** de Claude Code (el `mcpServers` de nivel superior
+en `~/.claude.json`, a diferencia de un `.mcp.json` de proyecto) no
+aplica el campo `cwd`. Cualquier entrada cuyo `args` contenga un path
+relativo, o cuyo comando necesite el directorio de trabajo en `sys.path`
+para una invocación `-m modulo`, falla inmediatamente en ese scope —
+aunque la misma entrada idéntica funcione en una config de proyecto.
+
+`cwd` sigue declarado en `registry.yaml` (inofensivo si otro cliente lo
+respeta, ej. una config de proyecto de Claude, Codex, u OpenCode), pero
+el `command`/`args`/`env` de cada entrada también tiene que ser
+autosuficiente sin él:
+
+- Cualquier path de script en `args` tiene que ser absoluto, no relativo.
+- Cualquier invocación `-m <paquete>` necesita `PYTHONPATH` fijado en
+  `env` hacia la raíz de ese paquete (el mismo patrón que la entrada de
+  FORGE ya usaba, por lo cual nunca se vio afectada).
+
+Antes de confiar en una entrada nueva, reproducí las dos direcciones vos
+misma, de la misma forma en que se encontró esto: corré el comando
+configurado exacto desde un directorio sin relación, sin fijar `cwd`,
+confirmá que falla igual que fallaría `CONNECTION_CLOSED`, y después
+confirmá que el fix (path absoluto/`PYTHONPATH`) funciona con un
+handshake stdio real. No lo infieras leyendo la entrada — el modo de
+falla es silencioso hasta que algo realmente intenta conectarse.
+
 ## Agregar un servidor
 
 1. El proyecto construye y verifica su **propio** servidor MCP primero — un
