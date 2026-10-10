@@ -222,6 +222,66 @@ def cmd_doctor_deep(servers: dict, timeout: float = 10.0) -> int:
     return 0 if ok else 1
 
 
+STATE_PATH = Path(__file__).parent / ".doctor_state.json"
+
+
+def _load_last_state() -> dict:
+    if STATE_PATH.exists():
+        try:
+            return json.loads(STATE_PATH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            return {}
+    return {}
+
+
+def _save_state(report: list[dict]) -> None:
+    snapshot = {entry["name"]: entry for entry in report}
+    STATE_PATH.write_text(json.dumps(snapshot, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def cmd_digest(servers: dict, timeout: float) -> int:
+    """ROADMAP.md Level 4: a scheduled run's digest. Compares this run's
+    deep-check result against the last saved state and prints only what
+    changed -- "N entries checked, all stable" most runs, a short list of
+    transitions otherwise. The schedule itself (cron, a systemd timer, a
+    session-start hook) is a separate decision left to whoever wires this
+    in; this is only the part that decides what's worth printing when it
+    runs, instead of a wall of repeated OKs."""
+    report = asyncio.run(doctor_deep_data(servers, timeout))
+    last = _load_last_state()
+    changed = []
+    for entry in report:
+        name = entry["name"]
+        prev = last.get(name)
+        prev_result = prev.get("result") if prev else None
+        cur_result = entry["result"]
+        prev_count = prev.get("tool_count") if prev else None
+        cur_count = entry.get("tool_count")
+        count_changed = (
+            prev_count is not None and cur_count is not None and prev_count != cur_count
+        )
+        if prev_result != cur_result or count_changed:
+            changed.append((name, prev_result, prev_count, entry))
+
+    if not changed:
+        print(f"No changes since last check ({len(report)} entries, all stable).")
+    else:
+        print(f"{len(changed)} change(s) since last check:")
+        for name, prev_result, prev_count, entry in changed:
+            cur_result = entry["result"]
+            cur_count = entry.get("tool_count")
+            label = prev_result or "unseen before"
+            line = f"  {name}: {label} -> {cur_result}"
+            if prev_count is not None and cur_count is not None and prev_count != cur_count:
+                line += f" ({prev_count} -> {cur_count} tools)"
+            if cur_result == "fail":
+                line += f" — {entry.get('diagnosis') or entry.get('error')}"
+            print(line)
+
+    _save_state(report)
+    return 0 if not any(e["result"] == "fail" for e in report) else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="target", required=True)
@@ -241,6 +301,11 @@ def main() -> int:
         help="seconds to wait per handshake with --deep (default: 10)",
     )
 
+    digest_parser = sub.add_parser(
+        "digest", help="deep check, but only report what changed since last run (ROADMAP.md Level 4)",
+    )
+    digest_parser.add_argument("--timeout", type=float, default=10.0)
+
     args = parser.parse_args()
     servers = load_registry()
 
@@ -254,6 +319,9 @@ def main() -> int:
         if args.deep:
             return cmd_doctor_deep(servers, args.timeout)
         return cmd_doctor(servers)
+
+    if args.target == "digest":
+        return cmd_digest(servers, args.timeout)
 
     output = renderers[args.target](servers)
     if getattr(args, "out", None):

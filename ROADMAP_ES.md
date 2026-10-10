@@ -158,7 +158,7 @@ apunté el comando de cronos a un path que no existe y confirmé que la
 llamada real a la tool igual funcionó con datos correctos; una falla de
 telemetría nunca aparece como una falla de la tool.
 
-## Nivel 4 — Los chequeos se corren solos, en un ritmo que tenga sentido
+## Nivel 4 — Los chequeos se corren solos, en un ritmo que tenga sentido — la lógica del diff está CONSTRUIDA, el ritmo es decisión de Anna
 
 Hoy, `doctor` solo corre cuando alguien se acuerda de correrlo — así fue
 como VELO le creció 6 tools en silencio y 5 entradas se rompieron en
@@ -171,6 +171,28 @@ sano conocido y produce un resumen corto — no ruido: "las N servidores
 siguen coincidiendo", o "VELO: 19 → 22 tools, DRIFT" — escrito a un
 archivo o mostrado la próxima vez que arranca una sesión, nunca una
 interrupción por el solo hecho de interrumpir.
+
+**La mitad del diff/resumen está construida como `render.py digest`.**
+Corre el mismo chequeo profundo del Nivel 1, compara cada entrada contra
+`.doctor_state.json` (en `.gitignore` — estado local de corrida, no
+contenido del registro), e imprime solo las transiciones: un fallo nuevo,
+un fallo resuelto, un cambio de tool_count — "sin cambios" en cualquier
+otro caso. El exit code se mantiene distinto de cero mientras alguna
+entrada esté realmente fallando, incluso en corridas de "sin cambios",
+así que el chequeo de exit-code de un cron sigue funcionando. Verificado
+en los tres caminos directamente: una primera corrida limpia (todo
+"nunca visto antes"), una segunda corrida estable ("sin cambios"), y una
+prueba con estado manipulado que confirmó que la comparación detecta un
+cambio de tool_count incluso cuando las dos corridas dicen "ok" por
+separado contra el registro (la primera versión de esta lógica se perdía
+ese caso — encontrado y arreglado probándolo, no leyéndolo).
+
+**El ritmo real queda deliberadamente sin decidir acá** — cron, un timer
+de systemd, un hook de inicio de sesión de Claude, o un agente en la nube
+programado son todas opciones reales con trade-offs distintos (qué puede
+dispararlas, adónde va la salida, quién la ve), y los propios invariantes
+de ROADMAP_ES.md dicen que esto tiene que ser decisión de Anna cuando
+ella quiera tomarla, no un default que elige alguien más por ella.
 
 Útil por sí solo: esta es la diferencia entre enterarse de la desviación
 cuando muerde, versus enterarse en un ritmo que Anna controla.

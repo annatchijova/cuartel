@@ -146,7 +146,7 @@ the degradation path directly — pointed cronos's command at a
 nonexistent path and confirmed the real tool call still succeeded with
 correct data; a telemetry failure never surfaces as a tool failure.
 
-## Level 4 — Checks run themselves, on a schedule that makes sense
+## Level 4 — Checks run themselves, on a schedule that makes sense — the diff logic is BUILT, the schedule is Anna's call
 
 Today, `doctor` only runs when someone remembers to run it — which is how
 VELO quietly grew 6 tools and 5 entries quietly broke without anyone
@@ -161,6 +161,26 @@ time a session starts, never an interrupt for its own sake.
 
 Useful standalone: this is the difference between finding out about drift
 when it bites, versus finding out about it on a schedule Anna controls.
+
+**The diff/digest half is built as `render.py digest`.** It runs the same
+deep check as Level 1, compares each entry against `.doctor_state.json`
+(gitignored — local run state, not registry content), and prints only
+transitions: a new fail, a resolved fail, a tool-count change — "no
+changes" otherwise. Exit code stays nonzero while any entry is actually
+failing, even across "no changes" runs, so a cron job's own exit-code
+alerting still works. Verified all three paths directly: a clean first
+run (everything "unseen before"), a stable second run ("no changes"), and
+a tampered-state test that confirmed the comparison catches a tool-count
+change even when both runs independently say "ok" against the registry
+(the first version of this logic missed that case — found and fixed by
+testing it, not by reading it).
+
+**The actual schedule is intentionally not decided here** — cron,
+systemd timer, a Claude session-start hook, or a scheduled cloud agent
+are all real options with different tradeoffs (what can trigger them,
+where the output goes, who sees it), and ROADMAP.md's own invariants say
+this should be Anna's call to make when she wants it, not a default
+anyone else picks for her.
 
 ## Level 5 — Drift becomes a draft, not a surprise
 

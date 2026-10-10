@@ -48,6 +48,7 @@ python3 render.py codex
 python3 render.py opencode
 python3 render.py doctor      # valida que cada comando registrado exista
 python3 render.py doctor --deep   # handshake real + drift de tool_count + diagnóstico (ROADMAP_ES.md N1)
+python3 render.py digest          # chequeo profundo, pero solo reporta lo que cambió desde la última corrida (ROADMAP_ES.md N4)
 ```
 
 CUARTEL también se expone a sí mismo como servidor MCP (`mcp_server.py`)
