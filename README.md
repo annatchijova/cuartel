@@ -5,6 +5,12 @@
 > MCP registry for Anna's forensic tool fleet — one registry, rendered to
 > Claude Code, Codex CLI, and OpenCode.
 
+🚧 **Still in active development — not a finished product.** The
+registry, renderers, and self-introspection server work and are verified
+against the live fleet (see [ROADMAP.md](ROADMAP.md) for what's built and
+what's intentionally still ahead), but interfaces, tool names, and the
+registry schema may still change.
+
 Anna runs a fleet of independent forensic and security tools — VIGÍA, CRONOS,
 MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, SIBERIAN,
 STIGMERGY, FORGE, CORVUS — each its own repository, its own tests, its own

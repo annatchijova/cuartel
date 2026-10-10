@@ -5,6 +5,12 @@
 > Registro MCP para la flota de herramientas forenses de Anna — un solo
 > registro, renderizado para Claude Code, Codex CLI, y OpenCode.
 
+🚧 **Todavía en desarrollo activo — no es un producto terminado.** El
+registro, los renderers y el servidor de autointrospección funcionan y
+están verificados contra la flota real (ver [ROADMAP_ES.md](ROADMAP_ES.md)
+para lo construido y lo que falta a propósito), pero las interfaces, los
+nombres de las tools, y el esquema del registro todavía pueden cambiar.
+
 Anna mantiene una flota de herramientas forenses y de seguridad independientes
 — VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda,
 PANCITO-RED-TEAM, SIBERIAN, STIGMERGY, FORGE, CORVUS — cada una en su propio
