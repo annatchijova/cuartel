@@ -158,7 +158,7 @@ apunté el comando de cronos a un path que no existe y confirmé que la
 llamada real a la tool igual funcionó con datos correctos; una falla de
 telemetría nunca aparece como una falla de la tool.
 
-## Nivel 4 — Los chequeos se corren solos, en un ritmo que tenga sentido — la lógica del diff está CONSTRUIDA, el ritmo es decisión de Anna
+## Nivel 4 — Los chequeos se corren solos, en un ritmo que tenga sentido — CONSTRUIDO 2026-10-10
 
 Hoy, `doctor` solo corre cuando alguien se acuerda de correrlo — así fue
 como VELO le creció 6 tools en silencio y 5 entradas se rompieron en
@@ -187,12 +187,36 @@ cambio de tool_count incluso cuando las dos corridas dicen "ok" por
 separado contra el registro (la primera versión de esta lógica se perdía
 ese caso — encontrado y arreglado probándolo, no leyéndolo).
 
-**El ritmo real queda deliberadamente sin decidir acá** — cron, un timer
-de systemd, un hook de inicio de sesión de Claude, o un agente en la nube
-programado son todas opciones reales con trade-offs distintos (qué puede
-dispararlas, adónde va la salida, quién la ve), y los propios invariantes
-de ROADMAP_ES.md dicen que esto tiene que ser decisión de Anna cuando
-ella quiera tomarla, no un default que elige alguien más por ella.
+**Decidido el 2026-10-10: un hook de SessionStart de Claude Code,
+limitado a una vez por día.** Un agente en la nube programado se
+descartó primero, por una razón que vale la pena decir con claridad:
+toda la flota corre como procesos stdio locales en esta máquina, así
+que un cron del lado de la nube literalmente no puede alcanzarlos para
+hacer un handshake real. De las opciones locales que quedaban (cron,
+timer de systemd, hook de sesión), Anna eligió el hook de sesión — lo ve
+justo cuando importa (está trabajando), sin infraestructura nueva que
+mantener, al costo de no correr los días que no abre Claude Code en
+absoluto — un trade-off aceptable para una desviación que se mueve en
+días, no en minutos.
+
+Construido como `daily_digest_hook.sh` (registrado en
+`hooks.SessionStart` de `~/.claude/settings.json`): un archivo marcador
+(hermano de `.doctor_state.json`, llamado `.digest_last_run`, en
+`.gitignore`) rastrea el último día calendario en que realmente corrió
+`render.py digest`. Cualquier otro arranque de sesión ese mismo día sale
+en silencio — abrir diez sesiones en un día no molesta diez veces. El
+día que sí corre, imprime un `systemMessage` para que el resumen
+aparezca de verdad en la sesión, no solo en un archivo de log que nadie
+lee. Verificado directamente, no asumido: se corrió dos veces seguidas —
+la primera ejecutó el digest e imprimió JSON válido con el resultado; la
+segunda corrida inmediata salió sin ninguna salida.
+
+En la misma sesión, al leer `~/.claude/settings.json` para agregar esto,
+se encontró y eliminó una exposición real: un bloque `mcpServers`
+separado ahí (no es una clave válida del schema de settings.json — el
+real vive en `~/.claude.json`) tenía una API key de Anthropic viva en
+texto plano, en el `env` de VIGÍA. Eliminado con confirmación explícita
+de Anna; se le avisó que considere rotar esa key.
 
 Útil por sí solo: esta es la diferencia entre enterarse de la desviación
 cuando muerde, versus enterarse en un ritmo que Anna controla.

@@ -80,6 +80,12 @@ visible en vez de silencioso.
 | `digest` | — | el mismo chequeo profundo, comparado contra `.doctor_state.json` (en `.gitignore`) de la última corrida — imprime solo las transiciones (fallo nuevo, fallo resuelto, cambio de tool_count) o "sin cambios", la forma que debería tener una corrida programada (ROADMAP_ES.md Nivel 4; el ritmo en sí no lo decide este repo) |
 | `scan` | — | redacta cambios de `registry.yaml` para la desviación que encuentra — un archivo de servidor MCP nuevo en un repo conocido al que ninguna entrada apunta, o el README de SIBERIAN perdiendo su banner "NOT READY" — y los imprime para revisión. Nunca escribe `registry.yaml` (ROADMAP_ES.md Nivel 5) |
 
+`daily_digest_hook.sh` conecta `digest` a un hook de SessionStart de
+Claude Code (registrado en `~/.claude/settings.json`), limitado a una
+vez por día calendario vía un archivo marcador en `.gitignore`
+(`.digest_last_run`) — ver ROADMAP_ES.md Nivel 4 para por qué se eligió
+un hook de sesión sobre cron/systemd/un agente en la nube.
+
 Los tres formatos se confirmaron contra la documentación propia y actual de
 cada herramienta al momento de construir esto (octubre 2026), no se
 asumieron de memoria. `--out <path>` escribe a un archivo en vez de stdout.

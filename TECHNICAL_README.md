@@ -79,6 +79,12 @@ exist yet, or exists but is deliberately not enabled) both show up in
 | `digest` | — | the same deep check, compared against `.doctor_state.json` (gitignored) from the last run — prints only transitions (new fail, resolved fail, tool-count change) or "no changes," the shape a scheduled run should actually print (ROADMAP.md Level 4; the schedule itself is not decided by this repo) |
 | `scan` | — | drafts `registry.yaml` changes for drift it finds — a new MCP server file in a known repo not referenced by any entry, or SIBERIAN's own README losing its "NOT READY" banner — and prints them for review. Never writes `registry.yaml` (ROADMAP.md Level 5) |
 
+`daily_digest_hook.sh` wires `digest` into a Claude Code SessionStart
+hook (registered in `~/.claude/settings.json`), throttled to once per
+calendar day via a gitignored marker file (`.digest_last_run`) — see
+ROADMAP.md Level 4 for why a session hook was chosen over cron/systemd/a
+cloud agent.
+
 All three formats were confirmed against each tool's own current
 documentation at the time this was built (October 2026), not assumed from
 memory. `--out <path>` writes to a file instead of stdout.

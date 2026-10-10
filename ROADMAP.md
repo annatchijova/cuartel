@@ -146,7 +146,7 @@ the degradation path directly — pointed cronos's command at a
 nonexistent path and confirmed the real tool call still succeeded with
 correct data; a telemetry failure never surfaces as a tool failure.
 
-## Level 4 — Checks run themselves, on a schedule that makes sense — the diff logic is BUILT, the schedule is Anna's call
+## Level 4 — Checks run themselves, on a schedule that makes sense — BUILT 2026-10-10
 
 Today, `doctor` only runs when someone remembers to run it — which is how
 VELO quietly grew 6 tools and 5 entries quietly broke without anyone
@@ -175,12 +175,33 @@ change even when both runs independently say "ok" against the registry
 (the first version of this logic missed that case — found and fixed by
 testing it, not by reading it).
 
-**The actual schedule is intentionally not decided here** — cron,
-systemd timer, a Claude session-start hook, or a scheduled cloud agent
-are all real options with different tradeoffs (what can trigger them,
-where the output goes, who sees it), and ROADMAP.md's own invariants say
-this should be Anna's call to make when she wants it, not a default
-anyone else picks for her.
+**Decided 2026-10-10: a Claude Code SessionStart hook, throttled to once
+a day.** A scheduled cloud agent was ruled out first, for a reason worth
+stating plainly: the whole fleet runs as local stdio processes on this
+machine, so a cloud-side cron literally cannot reach them to do a real
+handshake. Of the remaining local options (cron, systemd timer, session
+hook), Anna picked the session hook — she sees the digest exactly when
+it matters (she's working), with no separate infrastructure to maintain,
+at the cost of not running on days she never opens Claude Code at all —
+an acceptable tradeoff for drift that moves in days, not minutes.
+
+Built as `daily_digest_hook.sh` (registered in
+`~/.claude/settings.json`'s `hooks.SessionStart`): a marker file
+(`.doctor_state.json`'s sibling, `.digest_last_run`, gitignored) tracks
+the last calendar day it actually ran `render.py digest`. Every other
+session start that same day exits silently — opening ten sessions in one
+day doesn't nag ten times. On the day it does run, it prints a
+`systemMessage` so the digest actually surfaces in the session, not just
+to a log file nobody reads. Verified directly, not assumed: ran it twice
+in a row — first run executed the digest and printed valid JSON with
+the result; immediate second run exited with no output at all.
+
+In the same sitting, found and removed a real exposure while reading
+`~/.claude/settings.json` to add this: a separate, schema-invalid
+`mcpServers` block there (not an official settings.json key — the real
+one lives in `~/.claude.json`) had a live Anthropic API key sitting in
+plaintext in VIGÍA's `env`. Removed at Anna's explicit confirmation;
+flagged for her to consider rotating that key.
 
 ## Level 5 — Drift becomes a draft, not a surprise — BUILT 2026-10-10
 

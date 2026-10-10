@@ -3,3 +3,4 @@ __pycache__/
 .venv/
 /out/
 .doctor_state.json
+.digest_last_run
