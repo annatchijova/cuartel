@@ -343,12 +343,12 @@ servers:
 
   forge:
     display_name: "FORGE MCP"
-    repo: /home/labestiadevigia/forge-nuevo
+    repo: /home/labestiadevigia/forge
     command: /usr/bin/python3
     args: ["-m", "forge.mcp_server"]
-    cwd: /home/labestiadevigia/forge-nuevo
+    cwd: /home/labestiadevigia/forge
     env:
-      PYTHONPATH: "/home/labestiadevigia/forge-nuevo"
+      PYTHONPATH: "/home/labestiadevigia/forge"
     plane: repository-audit-and-sealing
     authority: >-
       Produces its own sealed audit findings (seal_results); not
@@ -381,6 +381,19 @@ servers:
       existed (PYTHONPATH pointing at forge-nuevo under the name
       "forge") — not re-curated here.
       Verified with a real stdio handshake post-consolidation: 22 tools.
+      ARCHIVED 2026-10-10: contrasted forge-nuevo against the old
+      forge directory directly (git ls-files diff, fresh test run, and
+      two live calls through this exact MCP connection --
+      repository_summary/triage_repository on cuartel and velo) before
+      archiving. The content diff showed every file unique to old forge
+      was a historical results/ run artifact, none of it source code;
+      forge-nuevo had the real new source (languages/, sarif.py, the
+      lexical auditor) on top. Live run on velo (170 modules) confirmed
+      multi-language detection actually works, not just in unit tests.
+      Directories renamed: /home/labestiadevigia/forge-nuevo ->
+      /home/labestiadevigia/forge (canonical from here on);
+      /home/labestiadevigia/forge (old) -> /home/labestiadevigia/forge-archived.
+      Its GitHub remote (forge.git) was also made private.
 
   corvus:
     display_name: "CORVUS MCP"
