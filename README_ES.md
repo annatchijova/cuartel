@@ -44,11 +44,16 @@ python3 render.py doctor      # valida que cada comando registrado exista
 python3 render.py doctor --deep   # handshake real + drift de tool_count + diagnóstico (ROADMAP_ES.md N1)
 ```
 
+CUARTEL también se expone a sí mismo como servidor MCP (`mcp_server.py`)
+para que cualquier sesión de agente le pregunte directo en vez de leer
+archivos — `cuartel_list_servers`, `cuartel_describe_server`,
+`cuartel_run_doctor`, `cuartel_find_capability` (ROADMAP_ES.md Nivel 2).
+
 ## Flota actual
 
 | Servidor | Estado |
 |---|---|
-| VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, FORGE, CORVUS | ready |
+| CUARTEL mismo, VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, FORGE, CORVUS | ready |
 | SIBERIAN | construido, deshabilitado a propósito — su propio README dice que no está listo para uso operacional |
 | mneme_memory_mcp | superado por MNEME, no registrado |
 | STIGMERGY | no construido — ver [Technical README](TECHNICAL_README.md) para la razón |

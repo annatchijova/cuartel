@@ -34,6 +34,41 @@
 # pancito-red-team) before editing anything live.
 
 servers:
+  cuartel:
+    display_name: "CUARTEL MCP (self-introspection)"
+    repo: /home/labestiadevigia/cuartel
+    command: /usr/bin/python3
+    args: ["/home/labestiadevigia/cuartel/mcp_server.py"]
+    cwd: /home/labestiadevigia/cuartel
+    env: {}
+    plane: read-only-fleet-introspection
+    authority: >-
+      No authority over any fleet project; only reads registry.yaml and
+      performs read-only handshakes (list_tools) against other ready
+      servers. Never writes to the registry, to any fleet project's
+      files, or to any fleet project's own MCP server beyond listing
+      its tools.
+    status: ready
+    tool_count: 4
+    notes: >-
+      Built 2026-10-09 (ROADMAP.md Level 2). cuartel_list_servers and
+      cuartel_describe_server read registry.yaml only (fast, no
+      network). cuartel_run_doctor(deep=True) and
+      cuartel_find_capability reuse render.py's own handshake() and
+      doctor_deep_data() -- one implementation, not a second copy that
+      can drift from `doctor --deep`. Needed two real bugs fixed before
+      it worked: both deep tools originally called asyncio.run() inside
+      an already-running event loop (FastMCP's own) and crashed on
+      first real call -- fixed by making them `async def` tools that
+      `await` directly, caught by actually calling them end-to-end, not
+      assumed from reading the code.
+      Verified with a real stdio handshake (4 tools) and real calls to
+      all four, including the error path (describe_server on an unknown
+      name) and the two live-handshake tools at full fan-out
+      (run_doctor deep against all 10 ready entries in ~5s;
+      find_capability("custody chain") returned relevant matches across
+      8 different servers).
+
   vigia:
     display_name: "VIGIA Sift Bridge"
     repo: /home/labestiadevigia/vigia-repo

@@ -103,6 +103,21 @@ devolvió realmente durante ese handshake.
 
 ## La flota, en detalle
 
+### CUARTEL mismo — ready
+`mcp_server.py`, 4 tools: `cuartel_list_servers`, `cuartel_describe_server`
+(ambas rápidas, solo leen registry.yaml), `cuartel_run_doctor` (shallow o
+`deep=True`, reusando el propio `doctor_deep_data()` de `render.py` — una
+sola implementación, no dos que puedan desviarse entre sí),
+`cuartel_find_capability` (un handshake real en paralelo a cada servidor
+`ready`, buscando en los nombres/descripciones de tools en vivo — nunca
+una segunda copia desactualizada de ellos). ROADMAP_ES.md Nivel 2. Dos
+bugs reales salieron a la luz solo al llamar las tools profundas de
+punta a punta: las dos llamaban originalmente a `asyncio.run()` desde
+adentro del loop de eventos ya corriendo de FastMCP y crasheaban en la
+primera llamada real; arreglado convirtiéndolas en tools `async def` que
+hacen `await` directo. CUARTEL se registra a sí mismo acá a propósito —
+la flota que administra se incluye a sí misma.
+
 ### VIGÍA — ready
 `vigia/vigia_sift_bridge.py`, FastMCP, 33 tools, solo stdio por construcción
 (`_verify_transport_security()` aborta duro ante cualquier otro transporte).

@@ -69,7 +69,7 @@ after it) — found by deliberately triggering the failure path with a
 broken fake entry and reading the real output, not assumed from writing
 the regex.
 
-## Level 2 — CUARTEL can explain itself to whoever asks
+## Level 2 — CUARTEL can explain itself to whoever asks — BUILT 2026-10-09
 
 Right now, "knowing how to use CUARTEL" means reading `registry.yaml` and
 two Markdown files. A fresh Claude Code session with zero memory of this
@@ -93,6 +93,18 @@ introspection:
 Useful standalone: any agent session, including one that has never seen
 this conversation, can now ask "what do I have for X" and get a correct
 answer instead of guessing or re-deriving it from scratch.
+
+**Built as `mcp_server.py`, registered in the fleet it manages.** Found
+two real bugs only by calling the two live-handshake tools end-to-end,
+not by reading the code: both `cuartel_run_doctor(deep=True)` and
+`cuartel_find_capability` originally called `asyncio.run()` from inside
+FastMCP's own already-running event loop and crashed on the first real
+call with "asyncio.run() cannot be called from a running event loop" —
+fixed by making them `async def` tools that `await` directly. Verified
+afterward with the same two calls: a full deep doctor run across all 11
+ready entries in ~5 seconds, and `find_capability("custody chain")`
+correctly surfacing relevant tools across 8 different servers from their
+live descriptions.
 
 ## Level 3 — Usage becomes a signal, not just an event
 

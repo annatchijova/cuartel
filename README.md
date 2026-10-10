@@ -43,11 +43,16 @@ python3 render.py doctor      # sanity-checks every registered command
 python3 render.py doctor --deep   # real handshake + tool-count drift + diagnosis (ROADMAP.md L1)
 ```
 
+CUARTEL also exposes itself as an MCP server (`mcp_server.py`) so any agent
+session can ask it directly instead of reading files —
+`cuartel_list_servers`, `cuartel_describe_server`, `cuartel_run_doctor`,
+`cuartel_find_capability` (ROADMAP.md Level 2).
+
 ## Current fleet
 
 | Server | Status |
 |---|---|
-| VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, FORGE, CORVUS | ready |
+| CUARTEL itself, VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, FORGE, CORVUS | ready |
 | SIBERIAN | built, kept disabled — its own README says not ready for operational use |
 | mneme_memory_mcp | superseded by MNEME, not registered |
 | STIGMERGY | not built — see [Technical README](TECHNICAL_README.md) for why |

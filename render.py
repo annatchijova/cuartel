@@ -130,7 +130,7 @@ def cmd_doctor(servers: dict) -> int:
     return 0 if ok else 1
 
 
-async def _handshake(name: str, cfg: dict, timeout: float) -> dict:
+async def handshake(name: str, cfg: dict, timeout: float, include_tools: bool = False) -> dict:
     """A real stdio MCP handshake against one entry -- never assumed from
     reading its command. Deliberately does NOT pass `cwd`: this is the
     same worst case Claude Code's global "User MCPs" scope actually
@@ -153,7 +153,13 @@ async def _handshake(name: str, cfg: dict, timeout: float) -> dict:
                         async with ClientSession(read, write) as session:
                             await session.initialize()
                             tools = await session.list_tools()
-                            return {"result": "connected", "tool_count": len(tools.tools)}
+                            result = {"result": "connected", "tool_count": len(tools.tools)}
+                            if include_tools:
+                                result["tools"] = [
+                                    {"name": t.name, "description": t.description or ""}
+                                    for t in tools.tools
+                                ]
+                            return result
             finally:
                 errlog.seek(0)
                 stderr_text = errlog.read()
@@ -167,35 +173,53 @@ async def _handshake(name: str, cfg: dict, timeout: float) -> dict:
         }
 
 
-async def _doctor_deep_async(servers: dict, timeout: float) -> int:
-    ok = True
-    ready = ready_servers(servers)
+async def doctor_deep_data(servers: dict, timeout: float) -> list[dict]:
+    """Pure data version of the deep doctor check -- no printing. Shared by
+    the CLI (`doctor --deep`) and cuartel's own MCP server
+    (`cuartel_run_doctor`), so there is exactly one implementation of this
+    check, not two that can drift apart."""
+    report = []
     for name, cfg in servers.items():
         status = cfg.get("status")
         if status != "ready":
-            print(f"[{status.upper():7}] {name} — {cfg.get('notes', '').strip()[:100]}")
+            report.append({"name": name, "status": status, "result": "skipped",
+                            "notes": cfg.get("notes", "").strip()})
             continue
-        outcome = await _handshake(name, cfg, timeout)
+        outcome = await handshake(name, cfg, timeout)
         expected = cfg.get("tool_count")
+        entry = {"name": name, "status": status}
         if outcome["result"] == "connected":
             count = outcome["tool_count"]
             if expected is not None and count != expected:
-                print(f"[DRIFT  ] {name} — handshake OK, {count} tools "
-                      f"(registry says {expected}) — update tool_count in registry.yaml")
+                entry.update(result="drift", tool_count=count, expected_tool_count=expected)
             else:
-                print(f"[OK     ] {name} — {count} tools, matches registry")
+                entry.update(result="ok", tool_count=count)
         else:
-            ok = False
-            print(f"[FAIL   ] {name} — {outcome['error']}")
-            if outcome["diagnosis"]:
-                print(f"           diagnosis: {outcome['diagnosis']}")
-            elif outcome["stderr"]:
-                print(f"           stderr: {outcome['stderr'][:200]}")
-    return 0 if ok else 1
+            entry.update(result="fail", error=outcome["error"],
+                         diagnosis=outcome.get("diagnosis"), stderr=outcome.get("stderr"))
+        report.append(entry)
+    return report
 
 
 def cmd_doctor_deep(servers: dict, timeout: float = 10.0) -> int:
-    return asyncio.run(_doctor_deep_async(servers, timeout))
+    report = asyncio.run(doctor_deep_data(servers, timeout))
+    ok = True
+    for entry in report:
+        if entry["result"] == "skipped":
+            print(f"[{entry['status'].upper():7}] {entry['name']} — {entry['notes'][:100]}")
+        elif entry["result"] == "ok":
+            print(f"[OK     ] {entry['name']} — {entry['tool_count']} tools, matches registry")
+        elif entry["result"] == "drift":
+            print(f"[DRIFT  ] {entry['name']} — handshake OK, {entry['tool_count']} tools "
+                  f"(registry says {entry['expected_tool_count']}) — update tool_count in registry.yaml")
+        else:
+            ok = False
+            print(f"[FAIL   ] {entry['name']} — {entry['error']}")
+            if entry.get("diagnosis"):
+                print(f"           diagnosis: {entry['diagnosis']}")
+            elif entry.get("stderr"):
+                print(f"           stderr: {entry['stderr'][:200]}")
+    return 0 if ok else 1
 
 
 def main() -> int:

@@ -75,7 +75,7 @@ coincidía con la redacción real del error de Python (`can't open file
 encontrado disparando deliberadamente el camino de falla con una entrada
 falsa rota y leyendo la salida real, no asumido al escribir la regex.
 
-## Nivel 2 — CUARTEL puede explicarse a quien le pregunte
+## Nivel 2 — CUARTEL puede explicarse a quien le pregunte — CONSTRUIDO 2026-10-09
 
 Hoy, "saber usar CUARTEL" significa leer `registry.yaml` y dos archivos
 Markdown. Una sesión nueva de Claude Code sin memoria de esta
@@ -99,6 +99,20 @@ introspección de solo lectura:
 Útil por sí solo: cualquier sesión de agente, incluso una que nunca vio
 esta conversación, ahora puede preguntar "qué tengo para X" y recibir una
 respuesta correcta en vez de adivinar o re-derivarla de cero.
+
+**Construido como `mcp_server.py`, registrado en la flota que
+administra.** Se encontraron dos bugs reales solo al llamar las dos tools
+de handshake en vivo de punta a punta, no leyendo el código: tanto
+`cuartel_run_doctor(deep=True)` como `cuartel_find_capability` llamaban
+originalmente a `asyncio.run()` desde adentro del loop de eventos ya
+corriendo de FastMCP, y crasheaban en la primera llamada real con
+"asyncio.run() cannot be called from a running event loop" — arreglado
+convirtiéndolas en tools `async def` que hacen `await` directo.
+Reverificado después con las mismas dos llamadas: una corrida completa de
+doctor profundo contra las 11 entradas `ready` en ~5 segundos, y
+`find_capability("custody chain")` encontrando correctamente tools
+relevantes en 8 servidores distintos a partir de sus descripciones en
+vivo.
 
 ## Nivel 3 — El uso se convierte en señal, no solo en evento
 
