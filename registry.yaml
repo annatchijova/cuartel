@@ -257,6 +257,76 @@ servers:
       service on the configured port returned a graceful error dict
       instead of crashing.
 
+  forge:
+    display_name: "FORGE MCP"
+    repo: /home/labestiadevigia/forge-nuevo
+    command: /usr/bin/python3
+    args: ["-m", "forge.mcp_server"]
+    cwd: /home/labestiadevigia/forge-nuevo
+    env:
+      PYTHONPATH: "/home/labestiadevigia/forge-nuevo"
+    plane: repository-audit-and-sealing
+    authority: >-
+      Produces its own sealed audit findings (seal_results); not
+      authoritative over any other project's verdicts.
+    status: ready
+    tool_count: 22
+    notes: >-
+      CONSOLIDATED 2026-10-09: there were two local directories of the
+      same project, /home/labestiadevigia/forge (remote forge.git) and
+      /home/labestiadevigia/forge-nuevo (remote forge-improved.git),
+      diverged since commit 6bee0de. The user's own belief that
+      forge-nuevo "has more languages" was correct, but not yet pulled
+      locally: forge-improved.git's origin/main had 11 unpulled commits
+      adding real C/C++, Java, C#, Ruby, PHP support via an already-merged
+      PR, on top of 6 local commits of determinism/honesty fixes and a
+      SARIF 2.1.0 exporter — none of which forge (the older directory)
+      has. forge only received 2 doc-only commits after the fork.
+      Consolidation performed: merged feat/sarif-output into forge-nuevo's
+      main (fast-forward), cherry-picked forge's doc-cleanup commit
+      (3a4f361) onto it, fetched and merged origin/main's 11-commit
+      language-pack lineage (one real conflict in
+      forge/detector/stack.py — two independent, non-overlapping
+      limitations-list additions, both kept), ran the full suite (482
+      passed, 5 skipped) before pushing. forge-nuevo is now the verified
+      canonical state. The original forge directory/repo was NOT deleted
+      — left as-is, archived, pending the user's own decision on its
+      remote.
+      Registered as-is (all 22 tools) matching what was already
+      configured in the user's own ~/.claude.json before this registry
+      existed (PYTHONPATH pointing at forge-nuevo under the name
+      "forge") — not re-curated here.
+      Verified with a real stdio handshake post-consolidation: 22 tools.
+
+  corvus:
+    display_name: "CORVUS MCP"
+    repo: /home/labestiadevigia/corvus
+    command: /usr/bin/python3
+    args: ["mcp_server.py"]
+    cwd: /home/labestiadevigia/corvus
+    env: {}
+    plane: read-mostly-communication-analysis
+    authority: >-
+      No verdict authority beyond its own SILENT/WATCH/ALERT/CRITICAL
+      output; analyze_message defaults to persist=False (does not write)
+      and only writes to memory/baseline/audit chain if the caller
+      explicitly passes persist=True.
+    status: ready
+    tool_count: 7
+    notes: >-
+      Already had its own mcp_server.py and was already configured in
+      the user's real ~/.claude.json before cuartel existed. Registered
+      as-is, all 7 tools, per explicit request (its own design already
+      makes the one conditionally-mutating tool opt-in, unlike
+      raven_recall's hidden side effect — no further curation needed).
+      No external dependency: SQLite local (~/.corvus/memory.db,
+      auto-created), no venv required (`mcp`/`dotenv`/`aiofiles` already
+      resolve from the global environment). Standalone — no functional
+      connection to the rest of the fleet beyond a borrowed input-
+      sanitization pattern comment referencing vigia-repo.
+      Verified with a real stdio handshake (7 tools) and a real call to
+      corvus_info.
+
   pancito-red-team:
     display_name: "pancito-red-team MCP"
     repo: /home/labestiadevigia/pancito-red-team

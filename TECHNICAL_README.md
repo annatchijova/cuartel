@@ -226,6 +226,48 @@ still marks Level 6 "Partial." The server working is not the gate: SIBERIAN's
 own README still says "UNDER CONSTRUCTION — NOT READY FOR OPERATIONAL USE."
 Flip this to `ready` when SIBERIAN itself says so, not when its bridge does.
 
+### FORGE — ready (consolidated two diverged directories first)
+`forge/mcp_server.py`, 22 tools. There were two local directories of the
+same project: `/home/labestiadevigia/forge` (remote `forge.git`) and
+`/home/labestiadevigia/forge-nuevo` (remote `forge-improved.git`),
+diverged since commit `6bee0de`. Anna's own belief that forge-nuevo "has
+more languages" turned out correct, but not yet pulled locally:
+`forge-improved.git`'s `origin/main` had 11 unpulled commits adding real
+C/C++, Java, C#, Ruby, and PHP support via an already-merged PR, sitting
+on top of 6 local commits of determinism/honesty fixes and a SARIF 2.1.0
+exporter — none of which the older `forge` directory has. `forge` only
+received 2 doc-only commits after the fork point.
+
+Consolidation performed: merged `feat/sarif-output` into forge-nuevo's
+`main` (fast-forward), cherry-picked forge's doc-cleanup commit
+(`3a4f361`) onto it, fetched and merged `origin/main`'s 11-commit
+language-pack lineage — one real conflict in `forge/detector/stack.py`
+(two independent, non-overlapping limitations-list additions, both kept)
+— and ran the full suite (482 passed, 5 skipped) before pushing.
+forge-nuevo's `main` is now the verified canonical state. The original
+`forge` directory and its `forge.git` remote were **not** deleted —
+left as-is, pending Anna's own decision on what to do with that remote
+and the local directory name.
+
+Registered as-is (all 22 tools), matching what was already configured in
+Anna's own `~/.claude.json` before this registry existed — a `PYTHONPATH`
+pointing at `forge-nuevo` under the server name `"forge"`. Not re-curated
+here, same posture as CORVUS below.
+
+### CORVUS — ready
+`mcp_server.py`, 7 tools: `analyze_message`, `get_user_baseline`,
+`get_user_history`, `get_channel_stats`, `verify_audit_chain`,
+`export_audit_chain`, `corvus_info`. Six are pure reads; `analyze_message`
+defaults to `persist=False` and only writes to memory/baseline/audit chain
+if the caller explicitly passes `persist=True` — an opt-in write, not a
+hidden side effect like raven-memory's `raven_recall`, so it did not need
+the same exclusion treatment. No external dependency: local SQLite
+(`~/.corvus/memory.db`, auto-created), no venv required. Standalone — no
+functional connection to the rest of the fleet beyond a borrowed
+input-sanitization pattern comment referencing vigia-repo. Already
+configured in Anna's own `~/.claude.json` before this registry existed;
+registered as-is, all 7 tools, per explicit request.
+
 ### STIGMERGY — not built
 No MCP server exists. CockroachDB is not a secondary or optional dependency
 here — it is the only coordination channel between agents and the primary

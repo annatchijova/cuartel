@@ -238,6 +238,52 @@ SIBERIAN todavía dice "UNDER CONSTRUCTION — NOT READY FOR OPERATIONAL USE".
 Pasar esto a `ready` cuando SIBERIAN mismo lo diga, no cuando lo diga su
 bridge.
 
+### FORGE — ready (primero consolidó dos directorios divergentes)
+`forge/mcp_server.py`, 22 tools. Había dos directorios locales del mismo
+proyecto: `/home/labestiadevigia/forge` (remote `forge.git`) y
+`/home/labestiadevigia/forge-nuevo` (remote `forge-improved.git`),
+divergentes desde el commit `6bee0de`. La creencia de Anna de que
+forge-nuevo "tiene más lenguajes" resultó correcta, solo que todavía no
+estaba traída localmente: el `origin/main` de `forge-improved.git` tenía
+11 commits sin traer que agregaban soporte real para C/C++, Java, C#,
+Ruby y PHP vía un PR ya mergeado, encima de 6 commits locales de fixes de
+determinismo/honestidad y un exportador SARIF 2.1.0 — nada de lo cual
+tiene el directorio `forge` más viejo. `forge` solo recibió 2 commits de
+limpieza de docs después del punto de bifurcación.
+
+Consolidación realizada: se mergeó `feat/sarif-output` al `main` de
+forge-nuevo (fast-forward), se cherry-pickeó el commit de limpieza de
+docs de forge (`3a4f361`) sobre él, se trajo y mergeó el linaje de 11
+commits de paquetes de lenguaje del `origin/main` — un conflicto real en
+`forge/detector/stack.py` (dos agregados independientes y no superpuestos
+a la misma lista de limitaciones, ambos conservados) — y se corrió la
+suite completa (482 passed, 5 skipped) antes de empujar. El `main` de
+forge-nuevo es ahora el estado canónico verificado. El directorio
+`forge` original y su remote `forge.git` **no** se borraron — quedan
+como están, pendientes de la decisión de Anna sobre qué hacer con ese
+remote y el nombre del directorio local.
+
+Registrado tal cual (las 22 tools), igual que ya estaba configurado en el
+propio `~/.claude.json` de Anna antes de que este registro existiera — un
+`PYTHONPATH` apuntando a `forge-nuevo` bajo el nombre de servidor
+`"forge"`. No se curó de nuevo acá, misma postura que CORVUS abajo.
+
+### CORVUS — ready
+`mcp_server.py`, 7 tools: `analyze_message`, `get_user_baseline`,
+`get_user_history`, `get_channel_stats`, `verify_audit_chain`,
+`export_audit_chain`, `corvus_info`. Seis son de lectura pura;
+`analyze_message` tiene `persist=False` por defecto y solo escribe en
+memoria/baseline/cadena de auditoría si el llamador pasa explícitamente
+`persist=True` — una escritura opt-in, no un efecto secundario escondido
+como el `raven_recall` de raven-memory, así que no necesitó el mismo
+tratamiento de exclusión. Sin dependencia externa: SQLite local
+(`~/.corvus/memory.db`, se crea sola), sin venv necesario. Standalone —
+sin conexión funcional con el resto de la flota más allá de un comentario
+que menciona haber tomado prestado un patrón de sanitización de inputs de
+vigia-repo. Ya estaba configurado en el propio `~/.claude.json` de Anna
+antes de que este registro existiera; registrado tal cual, las 7 tools,
+por pedido explícito.
+
 ### STIGMERGY — no construido
 No existe ningún servidor MCP. CockroachDB no es una dependencia secundaria
 u opcional acá — es el único canal de coordinación entre agentes y el

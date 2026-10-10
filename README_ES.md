@@ -4,7 +4,8 @@
 
 Anna mantiene una flota de herramientas forenses y de seguridad independientes
 — VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda,
-PANCITO-RED-TEAM, SIBERIAN, STIGMERGY — cada una en su propio repositorio, con
+PANCITO-RED-TEAM, SIBERIAN, STIGMERGY, FORGE, CORVUS — cada una en su propio
+repositorio, con
 sus propios tests, su propio ritmo de releases. Varias ya hablan MCP.
 Conectar todas a un runtime de agente (Claude Code hoy; Codex CLI u OpenCode
 si alguna vez hace falta un respaldo) significaba editar a mano un formato de
@@ -43,7 +44,7 @@ python3 render.py doctor      # valida que cada comando registrado exista
 
 | Servidor | Estado |
 |---|---|
-| VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM | ready |
+| VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, FORGE, CORVUS | ready |
 | SIBERIAN | construido, deshabilitado a propósito — su propio README dice que no está listo para uso operacional |
 | mneme_memory_mcp | superado por MNEME, no registrado |
 | STIGMERGY | no construido — ver [Technical README](TECHNICAL_README.md) para la razón |

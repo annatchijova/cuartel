@@ -4,7 +4,8 @@
 
 Anna runs a fleet of independent forensic and security tools — VIGÍA, CRONOS,
 MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, SIBERIAN,
-STIGMERGY — each its own repository, its own tests, its own release cadence.
+STIGMERGY, FORGE, CORVUS — each its own repository, its own tests, its own
+release cadence.
 Several already speak MCP. Connecting all of them to an agent runtime (Claude
 Code today; Codex CLI or OpenCode if she ever needs a fallback) meant hand
 editing a different config file format for each client, every time a server
@@ -42,7 +43,7 @@ python3 render.py doctor      # sanity-checks every registered command
 
 | Server | Status |
 |---|---|
-| VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM | ready |
+| VIGÍA, CRONOS, MNEME, raven-memory, ZAYNOR, VELO, annaconda, PANCITO-RED-TEAM, FORGE, CORVUS | ready |
 | SIBERIAN | built, kept disabled — its own README says not ready for operational use |
 | mneme_memory_mcp | superseded by MNEME, not registered |
 | STIGMERGY | not built — see [Technical README](TECHNICAL_README.md) for why |
