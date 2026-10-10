@@ -17,6 +17,21 @@
 #   ready    - server exists, verified, safe to register with a client now.
 #   blocked  - server exists but has a known open issue; do not register.
 #   planned  - server does not exist yet; tracked here for visibility only.
+#
+# IMPORTANT, found 2026-10-09 by reproducing 5 real CONNECTION_CLOSED
+# failures after merging into the live ~/.claude.json: Claude Code's
+# global "User MCPs" scope does NOT apply the `cwd` field. An entry whose
+# `args` is a relative path, or whose command needs `cwd` on sys.path for
+# `-m module` resolution, fails immediately in that scope even though the
+# exact same entry works in a project-local .mcp.json. `cwd` is still
+# declared below (harmless if honored, e.g. by Codex/OpenCode or a
+# project-scoped Claude config) but every entry's `command`/`args`/`env`
+# must also be fully self-sufficient without it: absolute paths in args,
+# and PYTHONPATH in env for any `-m module` invocation. Verified by
+# reproducing the failure (relative args from an unrelated cwd) and the
+# fix (absolute args / PYTHONPATH, no cwd) with a real stdio handshake
+# for all 5 affected entries (mneme, raven-memory, velo, annaconda,
+# pancito-red-team) before editing anything live.
 
 servers:
   vigia:
@@ -46,7 +61,7 @@ servers:
     display_name: "CRONOS MCP"
     repo: /home/labestiadevigia/cronos
     command: /home/labestiadevigia/cronos/.venv/bin/python3
-    args: ["mcp_server.py"]
+    args: ["/home/labestiadevigia/cronos/mcp_server.py"]
     cwd: /home/labestiadevigia/cronos
     env:
       CRONOS_DB_PATH: "/home/labestiadevigia/cronos/cronos.db"
@@ -75,7 +90,7 @@ servers:
     display_name: "MNEME MCP (read-only)"
     repo: /home/labestiadevigia/mneme
     command: /usr/bin/python3
-    args: ["mcp_server_readonly.py"]
+    args: ["/home/labestiadevigia/mneme/mcp_server_readonly.py"]
     cwd: /home/labestiadevigia/mneme
     env:
       MNEME_DB_PATH: "/home/labestiadevigia/mneme/mneme.db"
@@ -98,6 +113,11 @@ servers:
       3 tools needs it.
       Verified with a real stdio handshake (3 tools) and a real call
       against the live mneme.db.
+      FIXED 2026-10-09: args changed from a relative filename to an
+      absolute path after this entry failed with CONNECTION_CLOSED in
+      Claude Code's global scope (cwd not applied there — see the note
+      at the top of this file). Re-verified with a real handshake using
+      the absolute path and no cwd.
 
   mneme_memory_mcp:
     display_name: "mneme_memory_mcp (superseded — do not register)"
@@ -121,7 +141,7 @@ servers:
     display_name: "raven-memory MCP (read-only)"
     repo: /home/labestiadevigia/raven-memory
     command: /usr/bin/python3
-    args: ["mcp_server_readonly.py"]
+    args: ["/home/labestiadevigia/raven-memory/mcp_server_readonly.py"]
     cwd: /home/labestiadevigia/raven-memory
     env:
       RAVEN_DB_PATH: "/home/labestiadevigia/raven-memory/raven_memory.db"
@@ -147,6 +167,11 @@ servers:
       entirely, since none of the six kept tools embeds text.
       Verified with a real stdio handshake (6 tools) and a real call
       against the live raven_memory.db.
+      FIXED 2026-10-09: args changed from a relative filename to an
+      absolute path after this entry failed with CONNECTION_CLOSED in
+      Claude Code's global scope (cwd not applied there — see the note
+      at the top of this file). Re-verified with a real handshake using
+      the absolute path and no cwd.
 
   stigmergy:
     display_name: "stigmergy MCP (not built — deep CockroachDB coupling)"
@@ -205,7 +230,7 @@ servers:
     display_name: "VELO MCP"
     repo: /home/labestiadevigia/velo
     command: /usr/bin/node
-    args: ["dist/src/mcp/server.js"]
+    args: ["/home/labestiadevigia/velo/dist/src/mcp/server.js"]
     cwd: /home/labestiadevigia/velo
     env: {}
     plane: zk-attestation
@@ -213,7 +238,7 @@ servers:
       No verdict authority over this bridge beyond what the sealed bundle
       already carries; seal_case/verify_case read/write local-cases/ only.
     status: ready
-    tool_count: 13
+    tool_count: 19
     notes: >-
       UNBLOCKED (2026-10-09): the F1 path-traversal flagged in the original
       Spanish report (velo/docs/informe-red-team-VELO.md) was fixed in
@@ -226,6 +251,12 @@ servers:
       (docs/RED_TEAM_ROUND_1..6.md); the remaining open items there (F20-F25)
       are Medium/Low severity and do not touch caseId/MCP path handling —
       out of scope for this registration, not re-audited here.
+      tool_count updated 13 → 19 and args changed to an absolute path
+      2026-10-09: the relative args failed with CONNECTION_CLOSED in
+      Claude Code's global scope (cwd not applied there — see the note
+      at the top of this file); re-verified with a real handshake using
+      the absolute path and no cwd, which also surfaced that velo had
+      grown from 13 to 19 tools since this entry was first written.
 
   annaconda:
     display_name: "annaconda MCP"
@@ -234,6 +265,7 @@ servers:
     args: ["-m", "service.mcp_server"]
     cwd: /home/labestiadevigia/annaconda
     env:
+      PYTHONPATH: "/home/labestiadevigia/annaconda"
       ANNACONDA_BASE_URL: "http://127.0.0.1:8080"
     plane: read-only-verdict-query
     authority: >-
@@ -256,6 +288,11 @@ servers:
       returned exactly these 8 tools; a call against a non-annaconda
       service on the configured port returned a graceful error dict
       instead of crashing.
+      FIXED 2026-10-09: added PYTHONPATH to env after this entry failed
+      with CONNECTION_CLOSED in Claude Code's global scope (cwd not
+      applied there, so `-m service.mcp_server` could not resolve the
+      `service` package — see the note at the top of this file).
+      Re-verified with a real handshake using PYTHONPATH and no cwd.
 
   forge:
     display_name: "FORGE MCP"
@@ -302,9 +339,10 @@ servers:
     display_name: "CORVUS MCP"
     repo: /home/labestiadevigia/corvus
     command: /usr/bin/python3
-    args: ["mcp_server.py"]
+    args: ["/home/labestiadevigia/corvus/mcp_server.py"]
     cwd: /home/labestiadevigia/corvus
-    env: {}
+    env:
+      CORVUS_DB_PATH: "/home/labestiadevigia/.corvus/memory.db"
     plane: read-mostly-communication-analysis
     authority: >-
       No verdict authority beyond its own SILENT/WATCH/ALERT/CRITICAL
@@ -333,7 +371,8 @@ servers:
     command: /usr/bin/python3
     args: ["-m", "offensive.mcp_server"]
     cwd: /home/labestiadevigia/pancito-red-team
-    env: {}
+    env:
+      PYTHONPATH: "/home/labestiadevigia/pancito-red-team"
     plane: passive-local-file-analysis-only
     authority: >-
       No verdict/finding authority on its own; triages/scores receipts the
@@ -353,6 +392,11 @@ servers:
       call against hand-built fixtures matching
       tests/test_openapi_cli.py's own expected values byte-for-byte; the
       missing-file error path degrades to an error dict, no crash.
+      FIXED 2026-10-09: added PYTHONPATH to env after this entry failed
+      with CONNECTION_CLOSED in Claude Code's global scope (cwd not
+      applied there, so `-m offensive.mcp_server` could not resolve the
+      `offensive` package — see the note at the top of this file).
+      Re-verified with a real handshake using PYTHONPATH and no cwd.
 
   siberian:
     display_name: "siberian MCP (built, not enabled)"
