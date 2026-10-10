@@ -115,6 +115,16 @@ already-running event loop and crashed on the first real call; fixed by
 making them `async def` tools that `await` directly. CUARTEL registers
 itself here deliberately — the fleet it manages includes itself.
 
+All 4 tools also log their own call as a CRONOS trace (ROADMAP.md
+Level 3: `agent_id="cuartel"`, `post_to_slack=False`) — best-effort,
+never blocking the real result on it. CUARTEL does not mediate fleet
+tool *invocations* (only `list_tools()`), so what's logged is CUARTEL's
+own usage, not the whole fleet's — `cronos_list_traces(agent_id=
+"cuartel")` is CUARTEL's queryable call history. Verified: all 4 tools
+called once each, confirmed in CRONOS with `chain_ok: 1`; degradation
+verified directly by pointing CRONOS's command at a nonexistent path and
+confirming the real tool result was unaffected.
+
 ### VIGÍA — ready
 `vigia/vigia_sift_bridge.py`, FastMCP, 33 tools, stdio-only by construction
 (`_verify_transport_security()` hard-aborts on any other transport). Launched

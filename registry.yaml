@@ -68,6 +68,15 @@ servers:
       (run_doctor deep against all 10 ready entries in ~5s;
       find_capability("custody chain") returned relevant matches across
       8 different servers).
+      LEVEL 3 added 2026-10-09: every call to all 4 tools now logs a
+      CRONOS trace (agent_id="cuartel") via a best-effort client
+      wrapper -- open_trace / record_tool_call / close_trace
+      (post_to_slack=False). Verified: cronos_list_traces(agent_id=
+      "cuartel") showed all 4 real calls, each chain_ok=1. Also
+      verified the honest-degradation path directly: with cronos's
+      command pointed at a nonexistent path, the real tool call still
+      succeeded and returned correct data -- a telemetry failure never
+      surfaces as a tool failure.
 
   vigia:
     display_name: "VIGIA Sift Bridge"

@@ -114,7 +114,7 @@ doctor profundo contra las 11 entradas `ready` en ~5 segundos, y
 relevantes en 8 servidores distintos a partir de sus descripciones en
 vivo.
 
-## Nivel 3 — El uso se convierte en señal, no solo en evento
+## Nivel 3 — El uso se convierte en señal, no solo en evento — CONSTRUIDO 2026-10-09
 
 Hoy, una llamada a una tool en cualquier parte de la flota no deja
 rastro en ningún lado que CUARTEL pueda ver. No hay forma de saber qué
@@ -139,6 +139,24 @@ no como frustración dispersa y puntual.
 tenerlo registrado ya es estrictamente mejor que no tenerlo — el mismo
 principio detrás de cada cadena de auditoría de esta flota (VIGÍA, MNEME,
 CRONOS, raven-memory ya creen todos esto).
+
+**Construido — con una corrección de alcance que vale la pena decir con
+honestidad.** CUARTEL no media *invocaciones* reales a tools de la flota
+(nunca llama a una tool de la flota, solo hace `list_tools()` sobre ella
+— esa frontera es a propósito, ver los invariantes al principio de este
+documento). Así que lo que se loguea es que se llamaron las cuatro tools
+propias de CUARTEL, cada una como una traza de CRONOS bajo
+`agent_id="cuartel"` (`cronos_open_trace` → `cronos_record_tool_call` →
+`cronos_close_trace`, `post_to_slack=False`). Es más angosto que "cada
+llamada en toda la flota", pero es la versión honesta: las llamadas a
+`cuartel_run_doctor` y `cuartel_find_capability` ahora son un historial
+consultable (`cronos_list_traces(agent_id="cuartel")`), incluyendo qué
+servidores de la flota tocó cada una y qué encontró. Verificado: corrí
+las cuatro tools una vez cada una, confirmé las 4 trazas en CRONOS con
+`chain_ok: 1`. También verifiqué el camino de degradación directamente —
+apunté el comando de cronos a un path que no existe y confirmé que la
+llamada real a la tool igual funcionó con datos correctos; una falla de
+telemetría nunca aparece como una falla de la tool.
 
 ## Nivel 4 — Los chequeos se corren solos, en un ritmo que tenga sentido
 

@@ -118,6 +118,17 @@ primera llamada real; arreglado convirtiéndolas en tools `async def` que
 hacen `await` directo. CUARTEL se registra a sí mismo acá a propósito —
 la flota que administra se incluye a sí misma.
 
+Las 4 tools también loguean su propia llamada como una traza de CRONOS
+(ROADMAP_ES.md Nivel 3: `agent_id="cuartel"`, `post_to_slack=False`) —
+best-effort, nunca bloqueando el resultado real por eso. CUARTEL no media
+*invocaciones* a tools de la flota (solo `list_tools()`), así que lo que
+se loguea es el uso propio de CUARTEL, no el de toda la flota —
+`cronos_list_traces(agent_id="cuartel")` es el historial consultable de
+llamadas de CUARTEL. Verificado: las 4 tools llamadas una vez cada una,
+confirmadas en CRONOS con `chain_ok: 1`; la degradación se verificó
+directamente apuntando el comando de CRONOS a un path que no existe y
+confirmando que el resultado real de la tool no se vio afectado.
+
 ### VIGÍA — ready
 `vigia/vigia_sift_bridge.py`, FastMCP, 33 tools, solo stdio por construcción
 (`_verify_transport_security()` aborta duro ante cualquier otro transporte).

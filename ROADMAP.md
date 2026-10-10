@@ -106,7 +106,7 @@ ready entries in ~5 seconds, and `find_capability("custody chain")`
 correctly surfacing relevant tools across 8 different servers from their
 live descriptions.
 
-## Level 3 — Usage becomes a signal, not just an event
+## Level 3 — Usage becomes a signal, not just an event — BUILT 2026-10-09
 
 Today, a tool call across the fleet leaves no trace anywhere CUARTEL can
 see. There's no way to know which tools actually get used, which ones
@@ -129,6 +129,22 @@ Useful standalone: even before anything "acts" on this data, having it
 recorded is strictly better than not — the same principle behind every
 audit chain in this fleet (VIGÍA, MNEME, CRONOS, raven-memory all already
 believe this).
+
+**Built — with a scope correction worth stating honestly.** CUARTEL does
+not actually mediate fleet tool *invocations* (it never calls a fleet
+tool, only `list_tools()` on it — that boundary is deliberate, see the
+invariants at the top of this document). So what gets logged is CUARTEL's
+own four tools being called, each as one CRONOS trace under
+`agent_id="cuartel"` (`cronos_open_trace` → `cronos_record_tool_call` →
+`cronos_close_trace`, `post_to_slack=False`). That's narrower than "every
+call across the fleet," but it's the honest version: `cuartel_run_doctor`
+and `cuartel_find_capability` calls are now a queryable history
+(`cronos_list_traces(agent_id="cuartel")`), including which fleet servers
+each one touched and what it found. Verified: ran all four tools once
+each, confirmed all 4 traces in CRONOS with `chain_ok: 1`. Also verified
+the degradation path directly — pointed cronos's command at a
+nonexistent path and confirmed the real tool call still succeeded with
+correct data; a telemetry failure never surfaces as a tool failure.
 
 ## Level 4 — Checks run themselves, on a schedule that makes sense
 
